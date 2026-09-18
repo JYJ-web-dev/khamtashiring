@@ -38,9 +38,10 @@
     .btn-quick-date { padding: 10px 12px; font-size: 13px; font-weight: bold; background: #efece6; border: 1px solid #dcd5cb; border-radius: 8px; color: #5c2014; cursor: pointer; white-space: nowrap; }
     .btn-quick-date:hover { background: #e2dbd0; }
 
-    .btn-main { width: 100%; padding: 15px; background: #5c2014; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    .btn-main { width: 100%; padding: 15px; background: #5c2014; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
     .btn-main:hover { background: #45170d; }
     .btn-main:disabled { background: #b8b0a9; cursor: not-allowed; }
+    
     .btn-sub { padding: 8px 12px; min-height: 36px; background: #f3efe6; border: 1px solid #d4cdc5; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #4a423a; display: inline-flex; align-items: center; justify-content: center; }
     .btn-sub:hover { background: #e8e2d5; }
     .btn-complete { padding: 6px 10px; background: #fff0f0; border: 1px solid #fecaca; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; color: #b91c1c; }
@@ -64,9 +65,13 @@
     .modal-blessing { font-size: 14px; color: #4a3e35; line-height: 1.7; background: #fdfaf3; padding: 16px; border-radius: 10px; border: 1px dashed #d9bd8b; margin-bottom: 16px; }
 
     .char-count { text-align: right; font-size: 11px; color: #9c938b; margin-top: 3px; }
-    .msg { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 13px; text-align: center; display: none; }
-    .msg.success { background: #ecfdf5; color: #065f46; }
-    .msg.error { background: #fef2f2; color: #991b1b; }
+    
+    /* 로딩 안내창 스타일 강화 */
+    .msg { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 13.5px; text-align: center; display: none; word-break: keep-all; line-height: 1.5; font-weight: 500; }
+    .msg.loading { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .msg.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .msg.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    
     .log-item { background: #fbfaf8; border: 1px solid #ede8e1; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 13.5px; }
 
     .completed-item { background: #fcfbf9; border: 1px solid #e8e2d7; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer; }
@@ -135,6 +140,7 @@
       <textarea id="initAspiration" rows="4" placeholder="모든 유정들이 고통에서 벗어나 완전한 깨달음을 얻기를 발원합니다..."></textarea>
     </div>
     <button class="btn-main" id="btnInitMember" onclick="submitNewMemberInit()">사가행 정진 시작하기</button>
+    <div id="initMsg" class="msg"></div>
   </div>
 
   <!-- [3단계] 메인 대시보드 -->
@@ -395,30 +401,7 @@
   // 구글 앱스 스크립트 웹 앱 배포 URL
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzxN133mThlL6AV5XBCJlwXkhRo5Ds1JZ9ycqGB2V7yRLeJEC9ERttLKlAvMLFyiYHSA/exec";
 
-  // =========================================================================
-  // [사전 예열 엔진] 사용자가 이름/번호를 치는 동안 구글 서버를 조용히 깨움
-  // =========================================================================
-  function warmUpServer() {
-    const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify({ action: 'ping' })) + '&_t=' + Date.now();
-    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
-  }
-
-  // 1) 페이지 로딩 즉시 1차 예열 신호 발송
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', warmUpServer);
-  } else {
-    warmUpServer();
-  }
-
-  // 2) 이름 입력창을 터치하는 순간 2차 예열 신호 발송 (확실한 기상 보장)
-  window.addEventListener('DOMContentLoaded', () => {
-    const nameInput = document.getElementById('authName');
-    if (nameInput) {
-      nameInput.addEventListener('focus', warmUpServer, { once: true });
-    }
-  });
-
-  // [사파리/엣지 완벽 호환] GET 쿼리 전송 + 텍스트 수신 후 파싱 엔진
+  // [사파리/엣지 호환] GET 쿼리 전송 + 병목 유발 예열 기능 제거
   async function callGAS(action, params = {}) {
     const payload = Object.assign({ action: action }, params);
     const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify(payload)) + '&_t=' + Date.now();
@@ -541,6 +524,7 @@
     window.scrollTo(0, 0);
   }
 
+  // [수정] 도반 확인 로딩 안내 강화
   async function handleAuth() {
     const name = document.getElementById('authName').value.trim();
     const phone = document.getElementById('authPhone').value.trim();
@@ -551,8 +535,8 @@
     if (phone.length !== 4 || isNaN(phone)) return showAlert('전화번호 뒷자리는\n숫자 4자리로 정확히 입력해 주세요.');
 
     msg.style.display = 'block';
-    msg.className = 'msg';
-    msg.innerText = '도반 확인 중...';
+    msg.className = 'msg loading';
+    msg.innerHTML = '구글 서버에서 기록을 불러오고 있습니다.<br>잠시만 기다려주세요 (최초 1회 5~10초 소요)';
     btn.disabled = true;
 
     try {
@@ -582,9 +566,10 @@
     }
   }
 
-  // [핵심 패치] 신규 도반 가입 에러(TypeError)를 100% 차단하는 최신화 코드
+  // [수정] 신규 가입 에러 방지 최적화 코드
   async function submitNewMemberInit() {
     const btn = document.getElementById('btnInitMember');
+    const msg = document.getElementById('initMsg');
     const payload = {
       name: currentSession.name,
       phoneLast4: currentSession.phoneLast4,
@@ -599,22 +584,26 @@
     if (!payload.startDate) return showAlert('수행 시작 날짜를 선택하세요.');
 
     btn.disabled = true;
-    btn.innerText = '등록 중...';
+    msg.style.display = 'block';
+    msg.className = 'msg loading';
+    msg.innerHTML = '안전하게 등록 중입니다...<br>화면을 닫지 마세요.';
 
     try {
       const res = await callGAS('registerNewMemberAndNgondro', { payload: payload });
       if (res.success) {
         currentSession = res.updatedDashboard.member;
+        msg.style.display = 'none';
         document.getElementById('newMemberSection').style.display = 'none';
         showDashboard(res.updatedDashboard);
       } else {
+        msg.style.display = 'none';
         showAlert('등록 오류: ' + res.message);
       }
     } catch (err) {
+      msg.style.display = 'none';
       showAlert('통신 실패: ' + err.toString());
     } finally {
       btn.disabled = false;
-      btn.innerText = '사가행 정진 시작하기';
     }
   }
 
@@ -841,7 +830,10 @@
     const btn = document.getElementById('nSaveBtn');
     const msg = document.getElementById('nMsg');
     btn.disabled = true;
-    btn.innerText = '저장 중...';
+    
+    msg.style.display = 'block';
+    msg.className = 'msg loading';
+    msg.innerHTML = '안전하게 기록 중입니다...';
 
     const payload = {
       memberId: currentSession.id,
@@ -859,8 +851,6 @@
     try {
       const res = await callGAS('saveNgondroLog', { payload: payload });
       btn.disabled = false;
-      btn.innerText = '사가행 기록 저장';
-      msg.style.display = 'block';
 
       if (res.success) {
         msg.className = 'msg success';
@@ -880,8 +870,6 @@
       }
     } catch (err) {
       btn.disabled = false;
-      btn.innerText = '사가행 기록 저장';
-      msg.style.display = 'block';
       msg.className = 'msg error';
       msg.innerText = '저장 통신 실패: ' + err.toString();
     }
@@ -1103,7 +1091,10 @@
     if (!amt || amt <= 0) return showAlert('수행 분량(횟수)을 입력하세요.');
 
     btn.disabled = true;
-    btn.innerText = '저장 중...';
+    
+    msg.style.display = 'block';
+    msg.className = 'msg loading';
+    msg.innerHTML = '안전하게 기록 중입니다...';
 
     const payload = {
       memberId: currentSession.id,
@@ -1118,8 +1109,6 @@
     try {
       const res = await callGAS('saveOtherLog', { payload: payload });
       btn.disabled = false;
-      btn.innerText = '수행 기록 저장';
-      msg.style.display = 'block';
 
       if (res.success) {
         msg.className = 'msg success';
@@ -1139,8 +1128,6 @@
       }
     } catch (err) {
       btn.disabled = false;
-      btn.innerText = '수행 기록 저장';
-      msg.style.display = 'block';
       msg.className = 'msg error';
       msg.innerText = '저장 통신 실패: ' + err.toString();
     }
