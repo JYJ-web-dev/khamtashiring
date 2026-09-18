@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <base target="_top">
+
+  <!-- 1. 카카오톡 인앱 브라우저 외부 탈출 스크립트 -->
+  <script>
+    (function() {
+      var ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf('kakaotalk') > -1) {
+        location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
+      }
+    })();
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', 'Pretendard', sans-serif; margin: 0; padding: 20px 12px; background: #f6f4ee; color: #2d2926; }
+    .container { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 18px; box-shadow: 0 4px 22px rgba(0,0,0,0.07); overflow: hidden; display: flex; flex-direction: column; min-height: calc(100vh - 40px); }
+    
+    .header { background: linear-gradient(135deg, #4a150c, #691e12); color: #fff; padding: 22px 14px; text-align: center; }
+    .header-center { display: flex; align-items: center; justify-content: center; gap: 14px; }
+    .header h2 { margin: 0; font-size: 22px; letter-spacing: -0.5px; font-weight: 800; color: #fcefdc; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .header .sub { font-size: 13.5px; color: #dfc1b8; margin-top: 6px; letter-spacing: 0.5px; }
+    .vajra-icon { width: 34px; height: 34px; fill: #e5b95f; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); flex-shrink: 0; }
+
+    .nav-tabs { display: flex; background: #ece7dc; }
+    .tab-btn { flex: 1; padding: 15px; font-size: 15px; font-weight: bold; border: none; background: none; cursor: pointer; color: #7a6e65; }
+    .tab-btn.active { background: #fff; color: #5c2014; border-bottom: 3px solid #5c2014; }
+    .tab-content { display: none; padding: 22px; flex: 1; }
+    .tab-content.active { display: block; }
+
+    .aspiration-card { background: #fdfaf3; border: 1.5px solid #d9bd8b; border-radius: 12px; padding: 16px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(217, 189, 139, 0.15); }
+    .aspiration-title { font-size: 14px; font-weight: bold; color: #8c5b16; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .aspiration-body { font-size: 14.5px; color: #3e3228; line-height: 1.75; white-space: pre-wrap; word-break: keep-all; overflow-wrap: break-word; }
+
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 13.5px; font-weight: bold; margin-bottom: 6px; color: #4a423a; }
+    
+    /* 모바일 자동 확대(줌인) 방지: 16px 고정 */
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d4cdc5; border-radius: 8px; font-size: 16px !important; outline: none; background: #fff; color: #2d2926; }
+    input:focus, select:focus, textarea:focus { border-color: #5c2014; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .date-row { display: flex; gap: 8px; align-items: center; }
+    .date-row input { flex: 1; }
+    .btn-quick-date { padding: 10px 12px; font-size: 13px; font-weight: bold; background: #efece6; border: 1px solid #dcd5cb; border-radius: 8px; color: #5c2014; cursor: pointer; white-space: nowrap; }
+    .btn-quick-date:hover { background: #e2dbd0; }
+
+    .btn-main { width: 100%; padding: 15px; background: #5c2014; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    .btn-main:hover { background: #45170d; }
+    .btn-main:disabled { background: #b8b0a9; cursor: not-allowed; }
+    .btn-sub { padding: 8px 12px; min-height: 36px; background: #f3efe6; border: 1px solid #d4cdc5; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #4a423a; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-sub:hover { background: #e8e2d5; }
+    .btn-complete { padding: 6px 10px; background: #fff0f0; border: 1px solid #fecaca; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; color: #b91c1c; }
+    .btn-delete-log { padding: 3px 8px; background: #fff2f2; border: 1px solid #fca5a5; border-radius: 5px; font-size: 11.5px; color: #b91c1c; font-weight: bold; cursor: pointer; float: right; }
+
+    .progress-card { background: #faf9f5; border: 1px solid #ebdcd0; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .bar-bg { background: #e8e2d8; height: 9px; border-radius: 5px; overflow: hidden; margin-top: 6px; }
+    .bar-fill { background: linear-gradient(90deg, #c07d32, #5c2014); height: 100%; border-radius: 5px; }
+
+    .other-card { background: #fdfbf7; border: 1px solid #e2d9cb; border-radius: 12px; padding: 15px; margin-bottom: 14px; }
+    .other-header { display: flex; justify-content: space-between; align-items: center; }
+
+    .pagination-bar { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 14px; }
+    .page-btn { min-width: 38px; height: 38px; padding: 0 8px; border: 1px solid #d4cdc5; border-radius: 8px; background: #fff; font-size: 14px; font-weight: bold; color: #5c2014; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .page-btn.active { background: #5c2014; color: #fff; border-color: #5c2014; }
+    .page-btn:disabled { background: #f0ede6; color: #b0a89f; border-color: #e5dfd6; cursor: not-allowed; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 999; padding: 20px; }
+    .modal-content { background: #ffffff; border-radius: 16px; max-width: 440px; width: 100%; padding: 24px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 2px solid #e5b95f; }
+    .modal-title { font-size: 18px; font-weight: bold; color: #5c2014; margin-bottom: 12px; }
+    .modal-blessing { font-size: 14px; color: #4a3e35; line-height: 1.7; background: #fdfaf3; padding: 16px; border-radius: 10px; border: 1px dashed #d9bd8b; margin-bottom: 16px; }
+
+    .char-count { text-align: right; font-size: 11px; color: #9c938b; margin-top: 3px; }
+    .msg { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 13px; text-align: center; display: none; }
+    .msg.success { background: #ecfdf5; color: #065f46; }
+    .msg.error { background: #fef2f2; color: #991b1b; }
+    .log-item { background: #fbfaf8; border: 1px solid #ede8e1; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 13.5px; }
+
+    .completed-item { background: #fcfbf9; border: 1px solid #e8e2d7; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer; }
+    .completed-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ded7cc; font-size: 13px; }
+
+    .footer { text-align: center; padding: 22px 16px; font-size: 12.5px; color: #7d7265; line-height: 1.7; border-top: 1px solid #ebdcd0; background: #faf7f2; letter-spacing: 0.3px; margin-top: auto; }
+
+    /* 모바일 및 데스크톱 고대비 인쇄 스타일 */
+    @media print {
+      body { background: #fff !important; padding: 0 !important; color: #000 !important; }
+      .container { box-shadow: none !important; max-width: 100% !important; border-radius: 0 !important; min-height: auto !important; }
+      .nav-tabs, .btn-main, .btn-sub, .btn-complete, .btn-quick-date, .btn-delete-log,
+      .pagination-bar, .modal-overlay, #authSection, #newMemberSection, .form-group, #nSaveBtn, #oSaveBtn,
+      #addOtherSection, #otherLogInputBox, #ngondroAspEditBox, #celebrateBox, .header-center svg {
+        display: none !important;
+      }
+      .tab-content { display: block !important; padding: 10px 0 !important; }
+      .aspiration-card, .progress-card, .other-card, .log-item, .completed-item {
+        page-break-inside: avoid !important;
+        border-color: #bbb !important;
+        box-shadow: none !important;
+      }
+      .bar-bg { border: 1px solid #ccc !important; }
+      .bar-fill { background: #5c2014 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .header { background: #5c2014 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 14px 10px !important; }
+      .footer { border-top: 1px solid #ccc !important; font-size: 10px !important; padding: 10px !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-center">
+      <svg class="vajra-icon" viewBox="0 0 64 64"><path d="M32 6c-3 0-5 3-5 6s2 6 5 6 5-3 5-6-2-6-5-6zm-7 14c-4 2-8 7-8 13 0 4 2 9 6 12-2 3-5 5-9 6v3c8 0 14-2 18-5 4 3 10 5 18 5v-3c-4-1-7-3-9-6 4-3 6-8 6-12 0-6-4-11-8-13-2 3-5 5-10 5s-8-2-10-5zm-15 35c-2 2-3 4-3 6h54c0-2-1-4-3-6-6 3-15 4-24 4s-18-1-24-4z"/></svg>
+      <div>
+        <h2>캄따시링 수행 일지</h2>
+        <div class="sub">사가행 및 나의 수행 기록</div>
+      </div>
+      <svg class="vajra-icon" viewBox="0 0 64 64"><path d="M32 2l-4 8h8l-4-8zm-5 10c-3 4-5 9-5 14h10c0-5-2-10-5-14zm10 0c-3 4-5 9-5 14h10c0-5-2-10-5-14zM16 28l-8 4 8 4v-8zm32 0v8l8-4-8-4zm-22 2c0 1 1 2 2 2h8c1 0 2-1 2-2s-1-2-2-2h-8c-1 0-2 1-2 2zm-4 4c0 5 2 10 5 14 3-4 5-9 5-14h-10zm14 0c0 5 2 10 5 14 3-4 5-9 5-14h-10zm-5 16l4 8 4-8h-8z"/></svg>
+    </div>
+  </div>
+
+  <!-- [1단계] 본인 인증 화면 -->
+  <div id="authSection" style="padding: 24px;">
+    <div style="font-size: 14.5px; color: #6e645a; line-height: 1.6; margin-bottom: 16px; text-align: center;">
+      본인의 <strong>법명(또는 이름)</strong>과 <strong>전화번호 뒷자리 4자리</strong>를 입력해 주세요.
+    </div>
+    <div class="form-group">
+      <label>법명 / 이름 *</label>
+      <input type="text" id="authName" placeholder="예: 보리심 (또는 홍길동)">
+    </div>
+    <div class="form-group">
+      <label>전화번호 뒷자리 4자리 *</label>
+      <input type="tel" id="authPhone" maxlength="4" placeholder="예: 5678">
+    </div>
+    <button class="btn-main" onclick="handleAuth()">도반 확인 및 일지 열기</button>
+    <div id="authMsg" class="msg"></div>
+
+    <!-- 하단 로고 영역 -->
+    <div id="authLogoArea" style="text-align: center; margin-top: 28px; margin-bottom: 10px;">
+      <img id="kamtashilingLogo" 
+           src="https://raw.githubusercontent.com/JYJ-web-dev/khamtashiring/main/logo.png" 
+           alt="캄따시링 로고" 
+           style="width: 45%; max-width: 160px; min-width: 85px; height: auto; opacity: 0.95; filter: drop-shadow(0 4px 10px rgba(92, 32, 20, 0.12));">
+    </div>
+  </div>
+
+  <!-- [2단계] 신규 도반 초기설정 -->
+  <div id="newMemberSection" style="display: none; padding: 24px;">
+    <div style="font-weight: bold; font-size: 16px; color: #5c2014; margin-bottom: 8px;">첫 사가행 설정 및 발원문</div>
+    <p style="font-size: 13px; color: #6e645a; margin-bottom: 14px;">
+      이미 수행 중이시라면 기존 누적 횟수를 입력하시고, 수행의 원력을 세우는 발원문을 남겨주세요.
+    </p>
+
+    <div class="form-group">
+      <label>수행 시작일</label>
+      <input type="date" id="initStartDate">
+    </div>
+    <div class="grid-2">
+      <div class="form-group"><label>대배 기존 누적</label><input type="number" id="initPros" placeholder="0" min="0"></div>
+      <div class="form-group"><label>금강살타 기존 누적</label><input type="number" id="initVajra" placeholder="0" min="0"></div>
+      <div class="form-group"><label>만달라 공양 누적</label><input type="number" id="initMandala" placeholder="0" min="0"></div>
+      <div class="form-group"><label>구루 요가 누적</label><input type="number" id="initGuru" placeholder="0" min="0"></div>
+    </div>
+    <div class="form-group">
+      <label>나의 사가행 발원문</label>
+      <textarea id="initAspiration" rows="4" placeholder="모든 유정들이 고통에서 벗어나 완전한 깨달음을 얻기를 발원합니다..."></textarea>
+    </div>
+    <button class="btn-main" onclick="submitNewMemberInit()">사가행 정진 시작하기</button>
+  </div>
+
+  <!-- [3단계] 메인 대시보드 -->
+  <div id="mainSection" style="display: none;">
+    <div style="padding: 12px 16px; background: #fdfaf6; border-bottom: 1px solid #ebdcd0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span id="welcomeMsg" style="font-size: 14.5px; font-weight: bold; color: #5c2014;"></span>
+        <button class="btn-sub" onclick="openLogoutModal()">로그아웃</button>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button class="btn-sub" onclick="exportMyDataCSV()">📥 엑셀(CSV) 저장</button>
+        <button class="btn-sub" onclick="printMyDiary()">🖨️ 인쇄 / PDF 저장</button>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('ngondroTab', this)">1. 사가행 (四加行)</button>
+      <button class="tab-btn" onclick="switchTab('otherTab', this)">2. 기타 수행</button>
+    </div>
+
+    <!-- 탭 1: 사가행 -->
+    <div id="ngondroTab" class="tab-content active">
+      <div class="aspiration-card">
+        <div class="aspiration-title">
+          <span>🪷 사가행 성취 발원문</span>
+          <button class="btn-sub" style="min-height: 28px; padding: 4px 8px; font-size: 12px;" onclick="toggleEditNgondroAsp()">발원문 수정</button>
+        </div>
+        <div class="aspiration-body" id="ngondroAspDisplay">발원문을 작성해 보세요.</div>
+        
+        <div id="ngondroAspEditBox" style="display: none; margin-top: 10px;">
+          <textarea id="ngondroAspInput" rows="5" placeholder="발원문 내용을 적어주세요."></textarea>
+          <button class="btn-main" style="padding: 10px; font-size: 14px; margin-top: 6px;" onclick="saveNgondroAsp()">발원문 저장하기</button>
+        </div>
+      </div>
+
+      <div id="celebrateBox" style="display:none; background:#fef8ee; border:2px solid #e0a340; border-radius:10px; padding:15px; text-align:center; margin-bottom:15px;">
+        <div style="font-size:16px; font-weight:bold; color:#b45309;">🎉 사가행 11만 회 원만 회향을 축하합니다! 🎉</div>
+        <button class="btn-main" style="margin-top:8px; background:#d97706; padding:10px;" onclick="openAdvanceModal()">다음 차수(Round) 시작</button>
+      </div>
+
+      <div id="ngondroCardsBox"></div>
+
+      <!-- 사가행 당일 기록 폼 -->
+      <div style="background: #faf8f5; border: 1px solid #ebdcd0; border-radius: 12px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; font-size: 14px; color: #5c2014; margin-bottom: 10px;">오늘의 사가행 기록하기</div>
+        <div class="form-group">
+          <label>수행 날짜</label>
+          <div class="date-row">
+            <input type="date" id="nDailyDate">
+            <button type="button" class="btn-quick-date" onclick="setQuickDate('nDailyDate', 0)">오늘</button>
+            <button type="button" class="btn-quick-date" onclick="setQuickDate('nDailyDate', -1)">어제</button>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group"><label>대배 (배)</label><input type="number" id="nPros" placeholder="0" min="0"></div>
+          <div class="form-group"><label>금강살타 (독)</label><input type="number" id="nVajra" placeholder="0" min="0"></div>
+          <div class="form-group"><label>만달라 공양 (회)</label><input type="number" id="nMandala" placeholder="0" min="0"></div>
+          <div class="form-group"><label>구루 요가 (독)</label><input type="number" id="nGuru" placeholder="0" min="0"></div>
+        </div>
+
+        <div class="form-group">
+          <label>수행 성찰 메모 (최대 200자)</label>
+          <textarea id="nMemo" rows="3" maxlength="200" placeholder="수행 중 일어난 번뇌나 알아차림을 담백하게 남겨보세요." oninput="countChars('nMemo', 'nMemoCount')"></textarea>
+          <div class="char-count"><span id="nMemoCount">0</span> / 200자</div>
+        </div>
+        <button class="btn-main" id="nSaveBtn" onclick="submitNgondroDaily()">사가행 기록 저장</button>
+        <div id="nMsg" class="msg"></div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <div style="font-size: 14px; font-weight: bold; color: #5c2014; margin-bottom: 8px;">📖 나의 최근 사가행 일지</div>
+        <div id="nRecentFeed"></div>
+        <div id="nPagination" class="pagination-bar"></div>
+      </div>
+    </div>
+
+    <!-- 탭 2: 기타 수행 -->
+    <div id="otherTab" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 15px; font-weight: bold; color: #4a423a;">진행 중인 발원 기도</span>
+      </div>
+
+      <div id="otherListContainer"></div>
+
+      <!-- 기타수행 당일 기록 폼 -->
+      <div id="otherLogInputBox" style="display: none; background: #faf8f5; border: 1px solid #ebdcd0; border-radius: 12px; padding: 16px; margin-top: 16px;">
+        <div style="font-weight: bold; font-size: 14px; color: #5c2014; margin-bottom: 10px;" id="selectedOtherTitle">당일 수행 기록</div>
+        <input type="hidden" id="selectedOtherName">
+        
+        <div class="form-group">
+          <label>수행 날짜</label>
+          <div class="date-row">
+            <input type="date" id="oDailyDate">
+            <button type="button" class="btn-quick-date" onclick="setQuickDate('oDailyDate', 0)">오늘</button>
+            <button type="button" class="btn-quick-date" onclick="setQuickDate('oDailyDate', -1)">어제</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label id="oAmountLabel">수행 분량 *</label>
+          <input type="number" id="oAmount" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+          <label>수행 성찰 메모 (최대 200자)</label>
+          <textarea id="oMemo" rows="3" maxlength="200" placeholder="느낌이나 발원을 적어보세요." oninput="countChars('oMemo', 'oMemoCount')"></textarea>
+          <div class="char-count"><span id="oMemoCount">0</span> / 200자</div>
+        </div>
+        <button class="btn-main" id="oSaveBtn" onclick="submitOtherDaily()">수행 기록 저장</button>
+        <div id="oMsg" class="msg"></div>
+      </div>
+
+      <div style="margin-top: 24px; border-top: 1px solid #eae5db; padding-top: 16px;">
+        <div style="font-size: 14px; font-weight: bold; color: #5c2014; margin-bottom: 8px;">📖 나의 최근 발원기도 일지 (오입력 시 삭제 가능)</div>
+        <div id="oRecentFeed"></div>
+        <div id="oPagination" class="pagination-bar"></div>
+      </div>
+
+      <div id="addOtherSection" style="margin-top: 24px; border-top: 1px solid #eae5db; padding-top: 18px;">
+        <div style="font-weight: bold; font-size: 15px; color: #5c2014; margin-bottom: 10px;">새로운 기도 등록하기</div>
+        <div style="background: #fdfaf5; border: 1px solid #dcd3c5; border-radius: 10px; padding: 14px; margin-bottom: 22px;">
+          <div class="form-group">
+            <label>수행 항목명 *</label>
+            <input type="text" id="newOthName" placeholder="예: 관세음보살 6자진언, 반야심경">
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>수행 기간 구분 *</label>
+              <select id="newOthPeriod">
+                <option value="100일 기도">100일 기도</option>
+                <option value="21일 기도">21일 기도</option>
+                <option value="3일 기도">3일 기도</option>
+                <option value="상시 정진">상시 정진</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>측정 단위 *</label>
+              <select id="newOthUnit">
+                <option value="번">번 (진언·염송)</option>
+                <option value="독">독 (경전·독경)</option>
+                <option value="배">배 (절·예불)</option>
+                <option value="분">분 (명상·좌선)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>나의 발원문 *</label>
+            <textarea id="newOthAspiration" rows="3" placeholder="이 기도를 올리며 성취하고자 하는 발원을 적어주세요."></textarea>
+          </div>
+          <button class="btn-main" style="padding: 11px;" onclick="submitNewOtherPractice()">수행 항목 추가</button>
+        </div>
+
+        <div style="font-weight: bold; font-size: 14px; color: #5c2014; margin-bottom: 8px;">🌸 내가 원만 회향한 기도 목록</div>
+        <div id="completedListContainer"></div>
+        <div id="compPagination" class="pagination-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div style="margin-bottom: 8px; word-break: keep-all;">
+      캄따시링 회원들의 꾸준한 정진을 돕기 위해 제작된 수행 일지입니다.<br>
+      개선이 필요한 점이나 건의사항을 사무국으로 전해 주시면,<br>
+      제작자(장윤정)가 정성껏 보완하여 반영하겠습니다.
+    </div>
+    <div style="font-size: 11.5px; color: #a19688; border-top: 1px dashed #ded4c5; padding-top: 8px; margin-top: 6px;">
+      © 2026 Jangsem · 캄따시링 수행 일지
+    </div>
+  </div>
+</div>
+
+<!-- 모달 창 세트 -->
+<div id="simpleAlertModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 360px; padding: 22px 18px;">
+    <div style="font-size: 26px; margin-bottom: 8px;">📿</div>
+    <div id="simpleAlertMsg" style="font-size: 15px; color: #4a3e35; line-height: 1.6; margin-bottom: 18px; font-weight: 600; white-space: pre-wrap;"></div>
+    <button class="btn-main" style="width: 100%; padding: 11px; margin: 0;" onclick="closeSimpleAlert()">확인</button>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 380px; padding: 24px 20px;">
+    <div style="font-size: 28px; margin-bottom: 8px;">❓</div>
+    <div style="font-size: 16px; font-weight: bold; color: #5c2014; margin-bottom: 12px;">등록된 회원 정보가 없습니다</div>
+    <div id="confirmMsg" style="font-size: 14px; color: #4a3e35; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap; background: #fdfaf3; padding: 12px; border-radius: 8px; border: 1px solid #ebdcd0; text-align: left;"></div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-sub" style="flex: 1; padding: 12px;" onclick="closeConfirmModal()">오타 수정</button>
+      <button class="btn-main" style="flex: 1; padding: 12px; background: #c07d32;" onclick="proceedToRegister()">신규 등록</button>
+    </div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 360px; padding: 22px 18px;">
+    <div style="font-size: 28px; margin-bottom: 8px;">⚠️</div>
+    <div style="font-size: 16px; font-weight: bold; color: #b91c1c; margin-bottom: 10px;">기록 삭제 확인</div>
+    <div id="deleteModalMsg" style="font-size: 14px; color: #4a3e35; line-height: 1.6; margin-bottom: 20px;"></div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-sub" style="flex: 1; padding: 11px;" onclick="closeDeleteModal()">취소</button>
+      <button class="btn-main" style="flex: 1; padding: 11px; background: #b91c1c;" onclick="executeDeleteOtherLog()">삭제 실행</button>
+    </div>
+  </div>
+</div>
+
+<div id="editAspModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 440px; padding: 22px 18px;">
+    <div style="font-size: 16px; font-weight: bold; color: #5c2014; margin-bottom: 10px;" id="editAspTitle">발원문 수정</div>
+    <textarea id="editAspInput" rows="5" style="margin-bottom: 14px;"></textarea>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-sub" style="flex: 1; padding: 11px;" onclick="closeEditAspModal()">취소</button>
+      <button class="btn-main" style="flex: 1; padding: 11px;" onclick="executeSaveOtherAsp()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<div id="concludeModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-title" id="modalTitle">기도 회향 확인</div>
+    <p style="font-size:14px; color:#555; line-height:1.6; margin-bottom:15px;" id="modalPrompt">
+      이 기도를 계속 채워나가시겠습니까, 아니면 원만히 회향(종료)하시겠습니까?
+    </p>
+    <div id="blessingText" class="modal-blessing" style="display:none;"></div>
+    <div id="modalButtons">
+      <button class="btn-sub" style="padding:10px 16px; margin-right:8px;" onclick="closeModal()">계속 정진하기</button>
+      <button class="btn-main" style="width:auto; padding:10px 18px;" onclick="executeConclusion()">기도 완료 (회향)</button>
+    </div>
+    <div id="modalDoneButtons" style="display:none;">
+      <button class="btn-main" onclick="finishConclusionFlow()">확인 및 새 기도 목록으로</button>
+    </div>
+  </div>
+</div>
+
+<div id="logoutModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 360px; padding: 24px 20px;">
+    <div style="font-size: 28px; margin-bottom: 8px;">🚪</div>
+    <div style="font-size: 16px; font-weight: bold; color: #5c2014; margin-bottom: 10px;">로그아웃</div>
+    <div style="font-size: 14.5px; color: #4a3e35; line-height: 1.6; margin-bottom: 20px;">
+      로그아웃하시겠습니까?<br>처음 로그인 화면으로 이동합니다.
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-sub" style="flex: 1; padding: 11px;" onclick="closeLogoutModal()">취소</button>
+      <button class="btn-main" style="flex: 1; padding: 11px;" onclick="executeLogout()">로그아웃</button>
+    </div>
+  </div>
+</div>
+
+<div id="advanceModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content" style="max-width: 380px; padding: 24px 20px;">
+    <div style="font-size: 28px; margin-bottom: 8px;">🪷</div>
+    <div style="font-size: 16px; font-weight: bold; color: #5c2014; margin-bottom: 10px;">다음 차수 정진 시작</div>
+    <div id="advanceModalMsg" style="font-size: 14.5px; color: #4a3e35; line-height: 1.6; margin-bottom: 20px;"></div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-sub" style="flex: 1; padding: 11px;" onclick="closeAdvanceModal()">취소</button>
+      <button class="btn-main" style="flex: 1; padding: 11px; background: #d97706;" onclick="executeAdvanceRound()">새 차수 시작</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentSession = null;
+  let targetConcludePractice = null;
+  let tempRegisterPayload = null;
+  let latestDashboardData = null;
+  let targetDeleteLog = null;
+  let targetEditAspPracticeId = null;
+
+  const ITEMS_PER_PAGE = 5;
+  let ngondroLogsData = [];
+  let currentNgondroPage = 1;
+
+  let otherLogsData = [];
+  let currentOtherPage = 1;
+
+  let completedPracticesData = [];
+  let currentCompletedPage = 1;
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+    if (btn) {
+      btn.classList.add('active');
+    } else if (window.event && window.event.currentTarget) {
+      window.event.currentTarget.classList.add('active');
+    }
+  }
+
+  function countChars(inputId, countId) {
+    document.getElementById(countId).innerText = document.getElementById(inputId).value.length;
+  }
+
+  function showAlert(message) {
+    document.getElementById('simpleAlertMsg').innerText = message;
+    document.getElementById('simpleAlertModal').style.display = 'flex';
+  }
+
+  function closeSimpleAlert() {
+    document.getElementById('simpleAlertModal').style.display = 'none';
+  }
+
+  function setQuickDate(elementId, offsetDays) {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    document.getElementById(elementId).value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function showConfirmModal(message) {
+    document.getElementById('confirmMsg').innerText = message;
+    document.getElementById('confirmModal').style.display = 'flex';
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+    tempRegisterPayload = null;
+    document.getElementById('authName').focus();
+  }
+
+  function proceedToRegister() {
+    document.getElementById('confirmModal').style.display = 'none';
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('newMemberSection').style.display = 'block';
+    document.getElementById('initStartDate').value = tempRegisterPayload.todayDate;
+    currentSession = { name: tempRegisterPayload.name, phoneLast4: tempRegisterPayload.phoneLast4 };
+    window.scrollTo(0, 0);
+  }
+
+  function openLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'flex';
+  }
+
+  function closeLogoutModal() {
+    document.getElementById('logoutModal').style.display = 'none';
+  }
+
+  function executeLogout() {
+    closeLogoutModal();
+    currentSession = null;
+    tempRegisterPayload = null;
+    latestDashboardData = null;
+
+    document.getElementById('authName').value = '';
+    document.getElementById('authPhone').value = '';
+    document.getElementById('authMsg').style.display = 'none';
+
+    document.getElementById('mainSection').style.display = 'none';
+    document.getElementById('newMemberSection').style.display = 'none';
+    document.getElementById('authSection').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  function handleAuth() {
+    const name = document.getElementById('authName').value.trim();
+    const phone = document.getElementById('authPhone').value.trim();
+    const msg = document.getElementById('authMsg');
+    
+    if (!name || !phone) return showAlert('법명(이름)과 전화번호 뒷자리 4자리를\n모두 입력해 주세요.');
+    if (phone.length !== 4 || isNaN(phone)) return showAlert('전화번호 뒷자리는\n숫자 4자리로 정확히 입력해 주세요.');
+
+    msg.style.display = 'block';
+    msg.className = 'msg';
+    msg.innerText = '도반 확인 중...';
+
+    google.script.run
+      .withSuccessHandler(res => {
+        msg.style.display = 'none';
+        if (!res.success) return showAlert('조회 오류: ' + res.message);
+
+        if (res.isNewMember) {
+          tempRegisterPayload = { name: res.name, phoneLast4: res.phoneLast4, todayDate: res.todayDate };
+          const confirmNotice = 
+            `입력하신 정보:\n• 법명/이름: ${res.name}\n• 전화번호: ${res.phoneLast4}\n\n` +
+            `기존 기록을 찾을 수 없습니다.\n글자나 번호에 오타가 있다면 [오타 수정]을,\n처음 오신 분은 [신규 등록]을 눌러주세요.`;
+          showConfirmModal(confirmNotice);
+        } else {
+          currentSession = res.member;
+          showDashboard(res);
+        }
+      })
+      .accessDashboard(name, phone);
+  }
+
+  function submitNewMemberInit() {
+    const payload = {
+      name: currentSession.name,
+      phoneLast4: currentSession.phoneLast4,
+      startDate: document.getElementById('initStartDate').value,
+      initPros: document.getElementById('initPros').value,
+      initVajra: document.getElementById('initVajra').value,
+      initMandala: document.getElementById('initMandala').value,
+      initGuru: document.getElementById('initGuru').value,
+      aspiration: document.getElementById('initAspiration').value
+    };
+
+    if (!payload.startDate) return showAlert('수행 시작 날짜를 선택하세요.');
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) {
+          google.script.run.withSuccessHandler(dash => {
+            currentSession = dash.member;
+            document.getElementById('newMemberSection').style.display = 'none';
+            showDashboard(dash);
+          }).accessDashboard(payload.name, payload.phoneLast4);
+        } else {
+          showAlert('등록 오류: ' + res.message);
+        }
+      })
+      .registerNewMemberAndNgondro(payload);
+  }
+
+  function showDashboard(data) {
+    latestDashboardData = data;
+    currentSession.round = data.round;
+
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('newMemberSection').style.display = 'none';
+    document.getElementById('mainSection').style.display = 'block';
+    
+    document.getElementById('welcomeMsg').innerText = `${data.member.name} 도반님 (제${data.round}차 사가행 정진)`;
+    document.getElementById('nDailyDate').value = data.todayDate;
+    document.getElementById('oDailyDate').value = data.todayDate;
+
+    document.getElementById('ngondroAspDisplay').innerText = data.ngondroAspiration || '등록된 사가행 발원문이 없습니다. 발원문 수정을 눌러 작성해 보세요.';
+    document.getElementById('ngondroAspInput').value = data.ngondroAspiration || '';
+    document.getElementById('celebrateBox').style.display = data.allCompleted ? 'block' : 'none';
+
+    const items = [
+      { key: 'prostrations', name: '대배 (오체투지)', unit: '배' },
+      { key: 'vajrasattva', name: '금강살타 (백자진언)', unit: '독' },
+      { key: 'mandala', name: '만달라 공양', unit: '회' },
+      { key: 'guruYoga', name: '구루 요가', unit: '독' }
+    ];
+
+    let html = '';
+    items.forEach(it => {
+      const total = data.totalCounts[it.key] || 0;
+      const month = data.monthCounts[it.key] || 0;
+      const pct = Math.min(100, ((total / data.targetGoal) * 100)).toFixed(1);
+      html += `
+        <div class="progress-card">
+          <div style="display:flex; justify-content:space-between; font-size:14px;">
+            <strong>${it.name}</strong>
+            <span>당월 <strong>${month.toLocaleString()}</strong>${it.unit} / 누적 <strong>${total.toLocaleString()}</strong></span>
+          </div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;"></div></div>
+          <div style="text-align:right; font-size:11px; color:#8c827a; margin-top:3px;">진도율: ${pct}% (목표 11만)</div>
+        </div>
+      `;
+    });
+    document.getElementById('ngondroCardsBox').innerHTML = html;
+
+    ngondroLogsData = data.allNgondroLogs || [];
+    currentNgondroPage = 1;
+    renderNgondroPage(currentNgondroPage);
+
+    renderActiveOtherPractices(data.activePractices);
+
+    otherLogsData = data.allOtherLogs || [];
+    currentOtherPage = 1;
+    renderOtherPage(currentOtherPage);
+
+    completedPracticesData = data.completedPractices || [];
+    currentCompletedPage = 1;
+    renderCompletedPage(currentCompletedPage);
+  }
+
+  function renderNgondroPage(page) {
+    currentNgondroPage = page;
+    const feedBox = document.getElementById('nRecentFeed');
+    const paginationBox = document.getElementById('nPagination');
+
+    if (!ngondroLogsData || ngondroLogsData.length === 0) {
+      feedBox.innerHTML = '<p style="text-align:center; color:#9c938b; font-size:13px; padding:10px 0;">기록된 사가행 일지가 없습니다.</p>';
+      paginationBox.innerHTML = '';
+      return;
+    }
+
+    const totalPages = Math.ceil(ngondroLogsData.length / ITEMS_PER_PAGE);
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const pageItems = ngondroLogsData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    let html = '';
+    pageItems.forEach(l => {
+      let p = [];
+      if (l.p) p.push(`대배 ${l.p}`);
+      if (l.v) p.push(`금강살타 ${l.v}`);
+      if (l.m) p.push(`만달라 ${l.m}`);
+      if (l.g) p.push(`구루요가 ${l.g}`);
+      html += `
+        <div class="log-item">
+          <div style="font-weight:bold; color:#5c2014;">📅 ${l.date}</div>
+          <div style="color:#4a3e35; margin: 4px 0;">${p.join(' · ') || '수행 횟수 기록 없음'}</div>
+          ${l.memo ? `<div style="font-style:italic; color:#6e645a; border-top:1px dashed #eee; padding-top:4px; line-height:1.5;">“ ${escapeHtml(l.memo)} ”</div>` : ''}
+        </div>
+      `;
+    });
+    feedBox.innerHTML = html;
+
+    if (totalPages > 1) {
+      let pButtons = `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="renderNgondroPage(${page - 1})">◀</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        pButtons += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="renderNgondroPage(${i})">${i}</button>`;
+      }
+      pButtons += `<button class="page-btn ${page === totalPages ? 'disabled' : ''} onclick="renderNgondroPage(${page + 1})">▶</button>`;
+      paginationBox.innerHTML = pButtons;
+    } else {
+      paginationBox.innerHTML = '';
+    }
+  }
+
+  function renderOtherPage(page) {
+    currentOtherPage = page;
+    const feedBox = document.getElementById('oRecentFeed');
+    const paginationBox = document.getElementById('oPagination');
+
+    if (!otherLogsData || otherLogsData.length === 0) {
+      feedBox.innerHTML = '<p style="text-align:center; color:#9c938b; font-size:13px; padding:10px 0;">기록된 발원기도 일지가 없습니다.</p>';
+      paginationBox.innerHTML = '';
+      return;
+    }
+
+    const totalPages = Math.ceil(otherLogsData.length / ITEMS_PER_PAGE);
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const pageItems = otherLogsData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    let html = '';
+    pageItems.forEach(l => {
+      html += `
+        <div class="log-item">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-weight:bold; color:#5c2014;">📅 ${l.date} - <strong>${escapeHtml(l.name)}</strong> (${l.amount.toLocaleString()}회)</span>
+            <button class="btn-delete-log" onclick="promptDeleteOtherLog('${l.id}', '${escapeHtml(l.name)}', '${l.date}', ${l.amount})">삭제</button>
+          </div>
+          ${l.memo ? `<div style="font-style:italic; color:#6e645a; margin-top:4px; line-height:1.5;">“ ${escapeHtml(l.memo)} ”</div>` : ''}
+        </div>
+      `;
+    });
+    feedBox.innerHTML = html;
+
+    if (totalPages > 1) {
+      let pButtons = `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="renderOtherPage(${page - 1})">◀</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        pButtons += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="renderOtherPage(${i})">${i}</button>`;
+      }
+      pButtons += `<button class="page-btn ${page === totalPages ? 'disabled' : ''} onclick="renderOtherPage(${page + 1})">▶</button>`;
+      paginationBox.innerHTML = pButtons;
+    } else {
+      paginationBox.innerHTML = '';
+    }
+  }
+
+  function renderCompletedPage(page) {
+    currentCompletedPage = page;
+    const box = document.getElementById('completedListContainer');
+    const paginationBox = document.getElementById('compPagination');
+
+    if (!completedPracticesData || completedPracticesData.length === 0) {
+      box.innerHTML = '<p style="text-align:center; color:#9c938b; font-size:13px; padding:10px 0;">아직 회향한 기도 이력이 없습니다.</p>';
+      paginationBox.innerHTML = '';
+      return;
+    }
+
+    const totalPages = Math.ceil(completedPracticesData.length / ITEMS_PER_PAGE);
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    const pageItems = completedPracticesData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    let html = '';
+    pageItems.forEach((item, idx) => {
+      const globalIdx = startIndex + idx;
+      html += `
+        <div class="completed-item" onclick="toggleCompletedDetail(${globalIdx})">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="font-size:14px; color:#4a3227;">🌸 ${escapeHtml(item.name)} <small style="color:#888;">(${escapeHtml(item.period)})</small></strong>
+            <span style="font-size:12px; color:#5c2014; font-weight:bold;">원만 회향 ▼</span>
+          </div>
+          <div id="compDetail_${globalIdx}" class="completed-detail">
+            <div>📅 <strong>회향일:</strong> ${item.endDate} (시작: ${item.startDate})</div>
+            <div>📿 <strong>총 수행량:</strong> ${item.total.toLocaleString()} ${item.unit}</div>
+            <div style="margin-top:6px; background:#fff; padding:10px; border-radius:6px; border:1px dashed #d9bd8b; line-height:1.6; white-space: pre-wrap;">
+              <strong>당시의 발원문:</strong><br>${escapeHtml(item.aspiration) || '기록된 발원문 없음'}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    box.innerHTML = html;
+
+    if (totalPages > 1) {
+      let pButtons = `<button class="page-btn" ${page === 1 ? 'disabled' : ''} onclick="renderCompletedPage(${page - 1})">◀</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        pButtons += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="renderCompletedPage(${i})">${i}</button>`;
+      }
+      pButtons += `<button class="page-btn ${page === totalPages ? 'disabled' : ''} onclick="renderCompletedPage(${page + 1})">▶</button>`;
+      paginationBox.innerHTML = pButtons;
+    } else {
+      paginationBox.innerHTML = '';
+    }
+  }
+
+  function toggleCompletedDetail(idx) {
+    const el = document.getElementById('compDetail_' + idx);
+    if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  }
+
+  function toggleEditNgondroAsp() {
+    const box = document.getElementById('ngondroAspEditBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function saveNgondroAsp() {
+    const text = document.getElementById('ngondroAspInput').value;
+    google.script.run
+      .withSuccessHandler(res => {
+        if(res.success) {
+          document.getElementById('ngondroAspDisplay').innerText = text;
+          document.getElementById('ngondroAspEditBox').style.display = 'none';
+        }
+      })
+      .updateNgondroAspiration(currentSession.id, text);
+  }
+
+  function submitNgondroDaily() {
+    const btn = document.getElementById('nSaveBtn');
+    const msg = document.getElementById('nMsg');
+    btn.disabled = true;
+    btn.innerText = '저장 중...';
+
+    const payload = {
+      memberId: currentSession.id,
+      memberName: currentSession.name,
+      phoneLast4: currentSession.phoneLast4,
+      round: currentSession.round || 1,
+      date: document.getElementById('nDailyDate').value,
+      pros: document.getElementById('nPros').value,
+      vajra: document.getElementById('nVajra').value,
+      mandala: document.getElementById('nMandala').value,
+      guru: document.getElementById('nGuru').value,
+      memo: document.getElementById('nMemo').value
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.innerText = '사가행 기록 저장';
+        msg.style.display = 'block';
+
+        if (res.success) {
+          msg.className = 'msg success';
+          msg.innerText = '오늘의 사가행 정진이 원만히 기록되었습니다.';
+          document.getElementById('nPros').value = '';
+          document.getElementById('nVajra').value = '';
+          document.getElementById('nMandala').value = '';
+          document.getElementById('nGuru').value = '';
+          document.getElementById('nMemo').value = '';
+          document.getElementById('nMemoCount').innerText = '0';
+
+          showDashboard(res.updatedDashboard);
+          setTimeout(() => { msg.style.display = 'none'; }, 2000);
+        } else {
+          msg.className = 'msg error';
+          msg.innerText = res.message;
+        }
+      })
+      .saveNgondroLog(payload);
+  }
+
+  function renderActiveOtherPractices(list) {
+    const box = document.getElementById('otherListContainer');
+    if (!list || list.length === 0) {
+      box.innerHTML = '<p style="text-align:center; color:#9c938b; font-size:13px; padding:15px 0;">현재 진행 중인 발원 기도가 없습니다.<br>아래 [새로운 기도 등록하기]에서 시작해 보세요.</p>';
+      return;
+    }
+
+    let html = '';
+    list.forEach(item => {
+      html += `
+        <div class="other-card">
+          <div class="other-header">
+            <div>
+              <strong style="font-size:15px; color:#5c2014;">${escapeHtml(item.name)}</strong>
+              <span style="font-size:12px; color:#888; margin-left:4px;">(${escapeHtml(item.period)})</span>
+            </div>
+            <div>
+              <button class="btn-sub" style="min-height: 28px; padding: 4px 8px; font-size: 12px;" onclick="openOtherLogInput('${escapeHtml(item.name)}', '${escapeHtml(item.unit)}')">오늘 기록</button>
+              <button class="btn-complete" onclick="promptConclude('${item.id}', '${escapeHtml(item.name)}', ${item.total}, '${escapeHtml(item.aspiration)}')">회향 (완료)</button>
+            </div>
+          </div>
+
+          <div style="background:#fefbf6; border-left:3px solid #d9bd8b; padding:10px; margin:10px 0; font-size:13.5px; color:#4a3b2c; line-height:1.6;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong>🪷 발원문:</strong>
+              <button class="btn-sub" style="font-size:11px; padding:2px 7px; min-height:22px;" onclick="openEditOtherAsp('${item.id}', '${escapeHtml(item.name)}', '${encodeURIComponent(item.aspiration || '')}')">발원문 수정</button>
+            </div>
+            <div style="white-space: pre-wrap;">${escapeHtml(item.aspiration) || '작성된 발원문이 없습니다.'}</div>
+          </div>
+
+          <div style="font-size:13px; color:#4a423a;">
+            현재 누적 수행량: <strong style="color:#5c2014; font-size:15px;">${item.total.toLocaleString()}</strong> ${item.unit}
+            <span style="color:#999; font-size:11px; margin-left:8px;">시작일: ${item.startDate}</span>
+          </div>
+        </div>
+      `;
+    });
+    box.innerHTML = html;
+  }
+
+  function openEditOtherAsp(practiceId, practiceName, encodedAsp) {
+    targetEditAspPracticeId = practiceId;
+    document.getElementById('editAspTitle').innerText = `[${practiceName}] 발원문 수정`;
+    document.getElementById('editAspInput').value = decodeURIComponent(encodedAsp);
+    document.getElementById('editAspModal').style.display = 'flex';
+  }
+
+  function closeEditAspModal() {
+    document.getElementById('editAspModal').style.display = 'none';
+    targetEditAspPracticeId = null;
+  }
+
+  function executeSaveOtherAsp() {
+    const text = document.getElementById('editAspInput').value;
+    google.script.run
+      .withSuccessHandler(res => {
+        if(res.success) {
+          closeEditAspModal();
+          google.script.run.withSuccessHandler(showDashboard).accessDashboard(currentSession.name, currentSession.phoneLast4);
+        } else {
+          showAlert('수정 실패: ' + res.message);
+        }
+      })
+      .updateOtherAspiration(targetEditAspPracticeId, text);
+  }
+
+  function promptDeleteOtherLog(logId, name, date, amount) {
+    targetDeleteLog = { logId, name, date, amount };
+    document.getElementById('deleteModalMsg').innerHTML = 
+      `📅 <strong>${date}</strong>의<br>[<strong>${name}</strong>] <strong>${amount.toLocaleString()}</strong>회 기록을<br>정말 삭제하시겠습니까?`;
+    document.getElementById('deleteModal').style.display = 'flex';
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    targetDeleteLog = null;
+  }
+
+  function executeDeleteOtherLog() {
+    if (!targetDeleteLog) return;
+    google.script.run
+      .withSuccessHandler(res => {
+        closeDeleteModal();
+        if (res.success) {
+          showAlert('해당 기록이 원만히 삭제되었습니다.');
+          showDashboard(res.updatedDashboard);
+        } else {
+          showAlert('삭제 오류: ' + res.message);
+        }
+      })
+      .deleteOtherLog(currentSession.id, targetDeleteLog.logId, currentSession.phoneLast4);
+  }
+
+  function promptConclude(id, name, total, aspiration) {
+    targetConcludePractice = { id, name, total, aspiration };
+    document.getElementById('modalTitle').innerText = `[${name}] 기도 회향 확인`;
+    document.getElementById('modalPrompt').style.display = 'block';
+    document.getElementById('blessingText').style.display = 'none';
+    document.getElementById('modalButtons').style.display = 'block';
+    document.getElementById('modalDoneButtons').style.display = 'none';
+    document.getElementById('concludeModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('concludeModal').style.display = 'none';
+    targetConcludePractice = null;
+  }
+
+  function executeConclusion() {
+    if (!targetConcludePractice) return;
+    google.script.run
+      .withSuccessHandler(res => {
+        if(res.success) {
+          document.getElementById('modalPrompt').style.display = 'none';
+          document.getElementById('modalButtons').style.display = 'none';
+          const bless = document.getElementById('blessingText');
+          bless.innerHTML = `
+            <strong>🙏 원만 회향을 찬탄합니다 🙏</strong><br><br>
+            <strong>[${targetConcludePractice.name}]</strong> 기도를 하느라 수고하셨습니다.<br>
+            당신의 발원문대로 모든 것이 원만히 이뤄지기를 바랍니다.<br>
+            수행한 공덕을 지심으로 수희찬탄합니다.
+          `;
+          bless.style.display = 'block';
+          document.getElementById('modalDoneButtons').style.display = 'block';
+        }
+      })
+      .completeOtherPractice(targetConcludePractice.id, targetConcludePractice.total);
+  }
+
+  function finishConclusionFlow() {
+    closeModal();
+    google.script.run
+      .withSuccessHandler(data => {
+        showDashboard(data);
+        setTimeout(() => {
+          document.getElementById('addOtherSection').scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+      })
+      .accessDashboard(currentSession.name, currentSession.phoneLast4);
+  }
+
+  function submitNewOtherPractice() {
+    const name = document.getElementById('newOthName').value.trim();
+    const asp = document.getElementById('newOthAspiration').value.trim();
+    if (!name) return showAlert('수행 항목명을 입력하세요.');
+
+    const payload = {
+      memberId: currentSession.id,
+      memberName: currentSession.name,
+      practiceName: name,
+      periodType: document.getElementById('newOthPeriod').value,
+      startDate: document.getElementById('oDailyDate').value,
+      targetGoal: 0,
+      unit: document.getElementById('newOthUnit').value, 
+      aspiration: asp
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) {
+          showAlert(`[${name}] 기도가 등록되었습니다.\n발원을 새기며 정진을 시작하세요.`);
+          document.getElementById('newOthName').value = '';
+          document.getElementById('newOthAspiration').value = '';
+          google.script.run.withSuccessHandler(showDashboard).accessDashboard(currentSession.name, currentSession.phoneLast4);
+        } else {
+          showAlert('등록 오류: ' + res.message);
+        }
+      })
+      .registerOtherPractice(payload);
+  }
+
+  function openOtherLogInput(name, unit) {
+    document.getElementById('otherLogInputBox').style.display = 'block';
+    document.getElementById('selectedOtherTitle').innerText = `[${name}] 당일 수행 기록`;
+    document.getElementById('selectedOtherName').value = name;
+    document.getElementById('oAmountLabel').innerText = `수행 분량 (${unit}) *`;
+    document.getElementById('otherLogInputBox').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function submitOtherDaily() {
+    const btn = document.getElementById('oSaveBtn');
+    const msg = document.getElementById('oMsg');
+    const amt = document.getElementById('oAmount').value;
+    if (!amt || amt <= 0) return showAlert('수행 분량(횟수)을 입력하세요.');
+
+    btn.disabled = true;
+    btn.innerText = '저장 중...';
+
+    const payload = {
+      memberId: currentSession.id,
+      memberName: currentSession.name,
+      phoneLast4: currentSession.phoneLast4,
+      practiceName: document.getElementById('selectedOtherName').value,
+      date: document.getElementById('oDailyDate').value,
+      amount: amt,
+      memo: document.getElementById('oMemo').value
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.innerText = '수행 기록 저장';
+        msg.style.display = 'block';
+
+        if (res.success) {
+          msg.className = 'msg success';
+          msg.innerText = '수행 기록이 저장되었습니다.';
+          document.getElementById('oAmount').value = '';
+          document.getElementById('oMemo').value = '';
+          document.getElementById('oMemoCount').innerText = '0';
+          showDashboard(res.updatedDashboard);
+
+          setTimeout(() => {
+            msg.style.display = 'none';
+            document.getElementById('otherLogInputBox').style.display = 'none';
+          }, 1500);
+        } else {
+          msg.className = 'msg error';
+          msg.innerText = res.message;
+        }
+      })
+      .saveOtherLog(payload);
+  }
+
+  function openAdvanceModal() {
+    const curr = currentSession.round || 1;
+    document.getElementById('advanceModalMsg').innerHTML = 
+      `제<strong>${curr}차</strong> 사가행을 원만 회향하고<br>다음 <strong>제${curr + 1}차</strong> 사가행을 시작하시겠습니까?`;
+    document.getElementById('advanceModal').style.display = 'flex';
+  }
+
+  function closeAdvanceModal() {
+    document.getElementById('advanceModal').style.display = 'none';
+  }
+
+  function executeAdvanceRound() {
+    closeAdvanceModal();
+    const curr = currentSession.round || 1;
+    google.script.run
+      .withSuccessHandler(() => {
+        google.script.run.withSuccessHandler(showDashboard).accessDashboard(currentSession.name, currentSession.phoneLast4);
+      })
+      .proceedNgondroNextRound(currentSession.id, currentSession.name, curr, currentSession.phoneLast4);
+  }
+
+  function exportMyDataCSV() {
+    if (!latestDashboardData) return showAlert('내보낼 데이터가 없습니다.');
+    
+    let csv = '\uFEFF';
+    csv += '구분,날짜,수행항목,수행량,단위,메모\n';
+
+    (latestDashboardData.allNgondroLogs || []).forEach(l => {
+      if (l.p) csv += `사가행,${l.date},대배(오체투지),${l.p},배,"${(l.memo||'').replace(/"/g, '""')}"\n`;
+      if (l.v) csv += `사가행,${l.date},금강살타(백자진언),${l.v},독,"${(l.memo||'').replace(/"/g, '""')}"\n`;
+      if (l.m) csv += `사가행,${l.date},만달라공양,${l.m},회,"${(l.memo||'').replace(/"/g, '""')}"\n`;
+      if (l.g) csv += `사가행,${l.date},구루요가,${l.g},독,"${(l.memo||'').replace(/"/g, '""')}"\n`;
+    });
+
+    (latestDashboardData.allOtherLogs || []).forEach(o => {
+      csv += `기타수행,${o.date},${o.name},${o.amount},회,"${(o.memo||'').replace(/"/g, '""')}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `캄따시링_수행일지_${currentSession.name}_${latestDashboardData.todayDate}.csv`;
+    link.click();
+  }
+
+  // 2. 모바일 iframe 차단 회피형 인쇄 / PDF 출력 엔진 (새 탭 렌더링)
+  function printMyDiary() {
+    if (!latestDashboardData || !currentSession) {
+      showAlert('인쇄할 수행 데이터가 없습니다.\n기록을 먼저 불러와 주십시오.');
+      return;
+    }
+
+    const name = escapeHtml(currentSession.name || '도반');
+    const round = currentSession.round || 1;
+    const dateStr = latestDashboardData.todayDate;
+    const totals = latestDashboardData.totalCounts;
+
+    // 사가행 전체 기록 테이블 행 구성
+    let ngondroRows = '';
+    (latestDashboardData.allNgondroLogs || []).forEach(l => {
+      let details = [];
+      if (l.p) details.push(`대배 ${l.p}배`);
+      if (l.v) details.push(`금강살타 ${l.v}독`);
+      if (l.m) details.push(`만달라 ${l.m}회`);
+      if (l.g) details.push(`구루요가 ${l.g}독`);
+      ngondroRows += `
+        <tr>
+          <td style="padding:8px; border:1px solid #ccc; text-align:center;">${l.date}</td>
+          <td style="padding:8px; border:1px solid #ccc;">${details.join(' · ') || '-'}</td>
+          <td style="padding:8px; border:1px solid #ccc; font-size:12px; color:#555;">${escapeHtml(l.memo) || '-'}</td>
+        </tr>
+      `;
+    });
+
+    // 기타 수행 전체 기록 테이블 행 구성
+    let otherRows = '';
+    (latestDashboardData.allOtherLogs || []).forEach(o => {
+      otherRows += `
+        <tr>
+          <td style="padding:8px; border:1px solid #ccc; text-align:center;">${o.date}</td>
+          <td style="padding:8px; border:1px solid #ccc;">${escapeHtml(o.name)} (${o.amount.toLocaleString()}회)</td>
+          <td style="padding:8px; border:1px solid #ccc; font-size:12px; color:#555;">${escapeHtml(o.memo) || '-'}</td>
+        </tr>
+      `;
+    });
+
+    // 원만 회향한 기도 목록 행 구성
+    let compRows = '';
+    (latestDashboardData.completedPractices || []).forEach(c => {
+      compRows += `
+        <tr>
+          <td style="padding:8px; border:1px solid #ccc; text-align:center;">${c.endDate}</td>
+          <td style="padding:8px; border:1px solid #ccc;">${escapeHtml(c.name)} (${c.total.toLocaleString()} ${c.unit})</td>
+          <td style="padding:8px; border:1px solid #ccc; font-size:12px; color:#555;">${escapeHtml(c.aspiration) || '-'}</td>
+        </tr>
+      `;
+    });
+
+    const printDoc = `
+      <!DOCTYPE html>
+      <html lang="ko">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>캄따시링 수행일지 - ${name}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif; padding: 20px; color: #2d2926; background: #fff; line-height: 1.5; }
+          .print-nav { position: sticky; top: 0; background: #ffffff; padding: 12px 0; border-bottom: 2px solid #5c2014; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+          .btn-print { background: #5c2014; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
+          .btn-close { background: #eee; color: #333; border: 1px solid #ccc; padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .header h1 { font-size: 22px; color: #5c2014; margin: 0 0 6px 0; }
+          .header .meta { font-size: 13.5px; color: #666; }
+          .summary-card { background: #faf8f5; border: 1px solid #d9bd8b; border-radius: 8px; padding: 14px; margin-bottom: 24px; font-size: 13.5px; }
+          .section-title { font-size: 16px; font-weight: bold; color: #5c2014; margin: 24px 0 8px 0; border-bottom: 1px solid #5c2014; padding-bottom: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12.5px; }
+          th { background: #f0ece1; border: 1px solid #ccc; padding: 8px; color: #4a150c; }
+          tr { page-break-inside: avoid; }
+          .footer { text-align: center; margin-top: 30px; font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+          @media print {
+            .print-nav { display: none !important; }
+            body { padding: 0 !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-nav">
+          <button class="btn-close" onclick="window.close()">✕ 창 닫기</button>
+          <button class="btn-print" onclick="window.print()">🖨️ PDF 저장 / 인쇄</button>
+        </div>
+
+        <div class="header">
+          <h1>캄따시링 수행 일지</h1>
+          <div class="meta">수행자: <strong>${name}</strong> 도반 (제${round}차 사가행 정진) | 출력일자: ${dateStr}</div>
+        </div>
+
+        <div class="summary-card">
+          <div style="font-weight:bold; color:#5c2014; margin-bottom:6px;">📿 사가행 누적 진도 요약 (목표: 각 110,000회)</div>
+          <div>• 대배: ${totals.prostrations.toLocaleString()}회 | 금강살타: ${totals.vajrasattva.toLocaleString()}독 | 만달라: ${totals.mandala.toLocaleString()}회 | 구루요가: ${totals.guruYoga.toLocaleString()}독</div>
+          <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #d9bd8b; color:#4a3b2c;">
+            <strong>나의 발원문:</strong><br>${escapeHtml(latestDashboardData.ngondroAspiration) || '기록된 발원문 없음'}
+          </div>
+        </div>
+
+        <div class="section-title">1. 사가행 수행 기록부</div>
+        <table>
+          <thead>
+            <tr><th style="width:20%;">날짜</th><th style="width:45%;">수행 분량</th><th>성찰 메모</th></tr>
+          </thead>
+          <tbody>${ngondroRows || '<tr><td colspan="3" style="text-align:center; padding:12px; color:#888;">기록이 없습니다.</td></tr>'}</tbody>
+        </table>
+
+        <div class="section-title">2. 진행 중인 발원 기도 일지</div>
+        <table>
+          <thead>
+            <tr><th style="width:20%;">날짜</th><th style="width:45%;">기도 항목 (수행량)</th><th>성찰 메모</th></tr>
+          </thead>
+          <tbody>${otherRows || '<tr><td colspan="3" style="text-align:center; padding:12px; color:#888;">기록이 없습니다.</td></tr>'}</tbody>
+        </table>
+
+        ${compRows ? `
+          <div class="section-title">3. 원만 회향한 기도 목록</div>
+          <table>
+            <thead>
+              <tr><th style="width:20%;">회향일</th><th style="width:45%;">기도 항목 (총 수행량)</th><th>당시 발원문</th></tr>
+            </thead>
+            <tbody>${compRows}</tbody>
+          </table>
+        ` : ''}
+
+        <div class="footer">
+          캄따시링 (Kham Tashi Ling) 수행 공동체 · © 2026 Jangsem
+        </div>
+      </body>
+      </html>
+    `;
+
+    // iframe 제약을 벗어나 새 탭으로 즉시 렌더링
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(printDoc);
+      printWindow.document.close();
+      printWindow.focus();
+    } else {
+      showAlert('팝업이 차단되었습니다.\n브라우저 상단 설정에서 [팝업 허용]을 켜주십시오.');
+    }
+  }
+</script>
+</body>
+</html>
