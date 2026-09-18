@@ -395,10 +395,32 @@
   // 구글 앱스 스크립트 웹 앱 배포 URL
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzxN133mThlL6AV5XBCJlwXkhRo5Ds1JZ9ycqGB2V7yRLeJEC9ERttLKlAvMLFyiYHSA/exec";
 
+  // =========================================================================
+  // [사전 예열 엔진] 사용자가 이름/번호를 치는 동안 구글 서버를 조용히 깨움
+  // =========================================================================
+  function warmUpServer() {
+    const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify({ action: 'ping' })) + '&_t=' + Date.now();
+    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+  }
+
+  // 1) 페이지 로딩 즉시 1차 예열 신호 발송
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', warmUpServer);
+  } else {
+    warmUpServer();
+  }
+
+  // 2) 이름 입력창을 터치하는 순간 2차 예열 신호 발송 (확실한 기상 보장)
+  window.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('authName');
+    if (nameInput) {
+      nameInput.addEventListener('focus', warmUpServer, { once: true });
+    }
+  });
+
   // [사파리/엣지 완벽 호환] GET 쿼리 전송 + 텍스트 수신 후 파싱 엔진
   async function callGAS(action, params = {}) {
     const payload = Object.assign({ action: action }, params);
-    // 캐시 방지용 타임스탬프(_t) 부착
     const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify(payload)) + '&_t=' + Date.now();
     
     const response = await fetch(url, {
