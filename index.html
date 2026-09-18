@@ -3,17 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <base target="_top">
-
-  <!-- 1. 카카오톡 인앱 브라우저 외부 탈출 스크립트 -->
-  <script>
-    (function() {
-      var ua = navigator.userAgent.toLowerCase();
-      if (ua.indexOf('kakaotalk') > -1) {
-        location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
-      }
-    })();
-  </script>
+  <title>캄따시링 수행 일지</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -39,7 +29,6 @@
     .form-group { margin-bottom: 14px; }
     label { display: block; font-size: 13.5px; font-weight: bold; margin-bottom: 6px; color: #4a423a; }
     
-    /* 모바일 자동 확대(줌인) 방지: 16px 고정 */
     input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d4cdc5; border-radius: 8px; font-size: 16px !important; outline: none; background: #fff; color: #2d2926; }
     input:focus, select:focus, textarea:focus { border-color: #5c2014; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -84,27 +73,6 @@
     .completed-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ded7cc; font-size: 13px; }
 
     .footer { text-align: center; padding: 22px 16px; font-size: 12.5px; color: #7d7265; line-height: 1.7; border-top: 1px solid #ebdcd0; background: #faf7f2; letter-spacing: 0.3px; margin-top: auto; }
-
-    /* 모바일 및 데스크톱 고대비 인쇄 스타일 */
-    @media print {
-      body { background: #fff !important; padding: 0 !important; color: #000 !important; }
-      .container { box-shadow: none !important; max-width: 100% !important; border-radius: 0 !important; min-height: auto !important; }
-      .nav-tabs, .btn-main, .btn-sub, .btn-complete, .btn-quick-date, .btn-delete-log,
-      .pagination-bar, .modal-overlay, #authSection, #newMemberSection, .form-group, #nSaveBtn, #oSaveBtn,
-      #addOtherSection, #otherLogInputBox, #ngondroAspEditBox, #celebrateBox, .header-center svg {
-        display: none !important;
-      }
-      .tab-content { display: block !important; padding: 10px 0 !important; }
-      .aspiration-card, .progress-card, .other-card, .log-item, .completed-item {
-        page-break-inside: avoid !important;
-        border-color: #bbb !important;
-        box-shadow: none !important;
-      }
-      .bar-bg { border: 1px solid #ccc !important; }
-      .bar-fill { background: #5c2014 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .header { background: #5c2014 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 14px 10px !important; }
-      .footer { border-top: 1px solid #ccc !important; font-size: 10px !important; padding: 10px !important; }
-    }
   </style>
 </head>
 <body>
@@ -134,10 +102,9 @@
       <label>전화번호 뒷자리 4자리 *</label>
       <input type="tel" id="authPhone" maxlength="4" placeholder="예: 5678">
     </div>
-    <button class="btn-main" onclick="handleAuth()">도반 확인 및 일지 열기</button>
+    <button class="btn-main" id="btnAuth" onclick="handleAuth()">도반 확인 및 일지 열기</button>
     <div id="authMsg" class="msg"></div>
 
-    <!-- 하단 로고 영역 -->
     <div id="authLogoArea" style="text-align: center; margin-top: 28px; margin-bottom: 10px;">
       <img id="kamtashilingLogo" 
            src="https://raw.githubusercontent.com/JYJ-web-dev/khamtashiring/main/logo.png" 
@@ -167,7 +134,7 @@
       <label>나의 사가행 발원문</label>
       <textarea id="initAspiration" rows="4" placeholder="모든 유정들이 고통에서 벗어나 완전한 깨달음을 얻기를 발원합니다..."></textarea>
     </div>
-    <button class="btn-main" onclick="submitNewMemberInit()">사가행 정진 시작하기</button>
+    <button class="btn-main" id="btnInitMember" onclick="submitNewMemberInit()">사가행 정진 시작하기</button>
   </div>
 
   <!-- [3단계] 메인 대시보드 -->
@@ -199,7 +166,7 @@
         
         <div id="ngondroAspEditBox" style="display: none; margin-top: 10px;">
           <textarea id="ngondroAspInput" rows="5" placeholder="발원문 내용을 적어주세요."></textarea>
-          <button class="btn-main" style="padding: 10px; font-size: 14px; margin-top: 6px;" onclick="saveNgondroAsp()">발원문 저장하기</button>
+          <button class="btn-main" id="btnSaveNgondroAsp" style="padding: 10px; font-size: 14px; margin-top: 6px;" onclick="saveNgondroAsp()">발원문 저장하기</button>
         </div>
       </div>
 
@@ -315,7 +282,7 @@
             <label>나의 발원문 *</label>
             <textarea id="newOthAspiration" rows="3" placeholder="이 기도를 올리며 성취하고자 하는 발원을 적어주세요."></textarea>
           </div>
-          <button class="btn-main" style="padding: 11px;" onclick="submitNewOtherPractice()">수행 항목 추가</button>
+          <button class="btn-main" id="btnAddNewOther" style="padding: 11px;" onclick="submitNewOtherPractice()">수행 항목 추가</button>
         </div>
 
         <div style="font-weight: bold; font-size: 14px; color: #5c2014; margin-bottom: 8px;">🌸 내가 원만 회향한 기도 목록</div>
@@ -376,7 +343,7 @@
     <textarea id="editAspInput" rows="5" style="margin-bottom: 14px;"></textarea>
     <div style="display: flex; gap: 10px;">
       <button class="btn-sub" style="flex: 1; padding: 11px;" onclick="closeEditAspModal()">취소</button>
-      <button class="btn-main" style="flex: 1; padding: 11px;" onclick="executeSaveOtherAsp()">저장하기</button>
+      <button class="btn-main" id="btnSaveOtherAsp" style="flex: 1; padding: 11px;" onclick="executeSaveOtherAsp()">저장하기</button>
     </div>
   </div>
 </div>
@@ -390,7 +357,7 @@
     <div id="blessingText" class="modal-blessing" style="display:none;"></div>
     <div id="modalButtons">
       <button class="btn-sub" style="padding:10px 16px; margin-right:8px;" onclick="closeModal()">계속 정진하기</button>
-      <button class="btn-main" style="width:auto; padding:10px 18px;" onclick="executeConclusion()">기도 완료 (회향)</button>
+      <button class="btn-main" id="btnExecuteConclusion" style="width:auto; padding:10px 18px;" onclick="executeConclusion()">기도 완료 (회향)</button>
     </div>
     <div id="modalDoneButtons" style="display:none;">
       <button class="btn-main" onclick="finishConclusionFlow()">확인 및 새 기도 목록으로</button>
@@ -419,12 +386,27 @@
     <div id="advanceModalMsg" style="font-size: 14.5px; color: #4a3e35; line-height: 1.6; margin-bottom: 20px;"></div>
     <div style="display: flex; gap: 10px;">
       <button class="btn-sub" style="flex: 1; padding: 11px;" onclick="closeAdvanceModal()">취소</button>
-      <button class="btn-main" style="flex: 1; padding: 11px; background: #d97706;" onclick="executeAdvanceRound()">새 차수 시작</button>
+      <button class="btn-main" id="btnExecuteAdvance" style="flex: 1; padding: 11px; background: #d97706;" onclick="executeAdvanceRound()">새 차수 시작</button>
     </div>
   </div>
 </div>
 
 <script>
+  // =========================================================================
+  // 구글 앱스 스크립트 웹 앱 배포 URL (고속 백엔드 API 연결점)
+  // =========================================================================
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzxN133mThlL6AV5XBCJlwXkhRo5Ds1JZ9ycqGB2V7yRLeJEC9ERttLKlAvMLFyiYHSA/exec";
+
+  // 사파리 CORS 차단을 원천 방지하는 비동기 통신 래퍼
+  async function callGAS(action, params = {}) {
+    const payload = Object.assign({ action: action }, params);
+    const response = await fetch(GAS_WEB_APP_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return await response.json();
+  }
+
   let currentSession = null;
   let targetConcludePractice = null;
   let tempRegisterPayload = null;
@@ -530,10 +512,11 @@
     window.scrollTo(0, 0);
   }
 
-  function handleAuth() {
+  async function handleAuth() {
     const name = document.getElementById('authName').value.trim();
     const phone = document.getElementById('authPhone').value.trim();
     const msg = document.getElementById('authMsg');
+    const btn = document.getElementById('btnAuth');
     
     if (!name || !phone) return showAlert('법명(이름)과 전화번호 뒷자리 4자리를\n모두 입력해 주세요.');
     if (phone.length !== 4 || isNaN(phone)) return showAlert('전화번호 뒷자리는\n숫자 4자리로 정확히 입력해 주세요.');
@@ -541,27 +524,37 @@
     msg.style.display = 'block';
     msg.className = 'msg';
     msg.innerText = '도반 확인 중...';
+    btn.disabled = true;
 
-    google.script.run
-      .withSuccessHandler(res => {
-        msg.style.display = 'none';
-        if (!res.success) return showAlert('조회 오류: ' + res.message);
+    try {
+      const res = await callGAS('accessDashboard', { name: name, phoneLast4: phone });
+      msg.style.display = 'none';
 
-        if (res.isNewMember) {
-          tempRegisterPayload = { name: res.name, phoneLast4: res.phoneLast4, todayDate: res.todayDate };
-          const confirmNotice = 
-            `입력하신 정보:\n• 법명/이름: ${res.name}\n• 전화번호: ${res.phoneLast4}\n\n` +
-            `기존 기록을 찾을 수 없습니다.\n글자나 번호에 오타가 있다면 [오타 수정]을,\n처음 오신 분은 [신규 등록]을 눌러주세요.`;
-          showConfirmModal(confirmNotice);
-        } else {
-          currentSession = res.member;
-          showDashboard(res);
-        }
-      })
-      .accessDashboard(name, phone);
+      if (!res.success) {
+        showAlert('조회 오류: ' + res.message);
+        return;
+      }
+
+      if (res.isNewMember) {
+        tempRegisterPayload = { name: res.name, phoneLast4: res.phoneLast4, todayDate: res.todayDate };
+        const confirmNotice = 
+          `입력하신 정보:\n• 법명/이름: ${res.name}\n• 전화번호: ${res.phoneLast4}\n\n` +
+          `기존 기록을 찾을 수 없습니다.\n글자나 번호에 오타가 있다면 [오타 수정]을,\n처음 오신 분은 [신규 등록]을 눌러주세요.`;
+        showConfirmModal(confirmNotice);
+      } else {
+        currentSession = res.member;
+        showDashboard(res);
+      }
+    } catch (err) {
+      msg.style.display = 'none';
+      showAlert('서버 통신 실패: 인터넷 연결을 확인해 주세요.\n(' + err.toString() + ')');
+    } finally {
+      btn.disabled = false;
+    }
   }
 
-  function submitNewMemberInit() {
+  async function submitNewMemberInit() {
+    const btn = document.getElementById('btnInitMember');
     const payload = {
       name: currentSession.name,
       phoneLast4: currentSession.phoneLast4,
@@ -575,19 +568,25 @@
 
     if (!payload.startDate) return showAlert('수행 시작 날짜를 선택하세요.');
 
-    google.script.run
-      .withSuccessHandler(res => {
-        if (res.success) {
-          google.script.run.withSuccessHandler(dash => {
-            currentSession = dash.member;
-            document.getElementById('newMemberSection').style.display = 'none';
-            showDashboard(dash);
-          }).accessDashboard(payload.name, payload.phoneLast4);
-        } else {
-          showAlert('등록 오류: ' + res.message);
-        }
-      })
-      .registerNewMemberAndNgondro(payload);
+    btn.disabled = true;
+    btn.innerText = '등록 중...';
+
+    try {
+      const res = await callGAS('registerNewMemberAndNgondro', { payload: payload });
+      if (res.success) {
+        const dash = await callGAS('accessDashboard', { name: payload.name, phoneLast4: payload.phoneLast4 });
+        currentSession = dash.member;
+        document.getElementById('newMemberSection').style.display = 'none';
+        showDashboard(dash);
+      } else {
+        showAlert('등록 오류: ' + res.message);
+      }
+    } catch (err) {
+      showAlert('통신 실패: ' + err.toString());
+    } finally {
+      btn.disabled = false;
+      btn.innerText = '사가행 정진 시작하기';
+    }
   }
 
   function showDashboard(data) {
@@ -789,19 +788,27 @@
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
   }
 
-  function saveNgondroAsp() {
+  async function saveNgondroAsp() {
+    const btn = document.getElementById('btnSaveNgondroAsp');
     const text = document.getElementById('ngondroAspInput').value;
-    google.script.run
-      .withSuccessHandler(res => {
-        if(res.success) {
-          document.getElementById('ngondroAspDisplay').innerText = text;
-          document.getElementById('ngondroAspEditBox').style.display = 'none';
-        }
-      })
-      .updateNgondroAspiration(currentSession.id, text);
+    btn.disabled = true;
+
+    try {
+      const res = await callGAS('updateNgondroAspiration', { memberId: currentSession.id, aspirationText: text });
+      if (res.success) {
+        document.getElementById('ngondroAspDisplay').innerText = text;
+        document.getElementById('ngondroAspEditBox').style.display = 'none';
+      } else {
+        showAlert('수정 오류: ' + res.message);
+      }
+    } catch (err) {
+      showAlert('통신 실패: ' + err.toString());
+    } finally {
+      btn.disabled = false;
+    }
   }
 
-  function submitNgondroDaily() {
+  async function submitNgondroDaily() {
     const btn = document.getElementById('nSaveBtn');
     const msg = document.getElementById('nMsg');
     btn.disabled = true;
@@ -820,30 +827,35 @@
       memo: document.getElementById('nMemo').value
     };
 
-    google.script.run
-      .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.innerText = '사가행 기록 저장';
-        msg.style.display = 'block';
+    try {
+      const res = await callGAS('saveNgondroLog', { payload: payload });
+      btn.disabled = false;
+      btn.innerText = '사가행 기록 저장';
+      msg.style.display = 'block';
 
-        if (res.success) {
-          msg.className = 'msg success';
-          msg.innerText = '오늘의 사가행 정진이 원만히 기록되었습니다.';
-          document.getElementById('nPros').value = '';
-          document.getElementById('nVajra').value = '';
-          document.getElementById('nMandala').value = '';
-          document.getElementById('nGuru').value = '';
-          document.getElementById('nMemo').value = '';
-          document.getElementById('nMemoCount').innerText = '0';
+      if (res.success) {
+        msg.className = 'msg success';
+        msg.innerText = '오늘의 사가행 정진이 원만히 기록되었습니다.';
+        document.getElementById('nPros').value = '';
+        document.getElementById('nVajra').value = '';
+        document.getElementById('nMandala').value = '';
+        document.getElementById('nGuru').value = '';
+        document.getElementById('nMemo').value = '';
+        document.getElementById('nMemoCount').innerText = '0';
 
-          showDashboard(res.updatedDashboard);
-          setTimeout(() => { msg.style.display = 'none'; }, 2000);
-        } else {
-          msg.className = 'msg error';
-          msg.innerText = res.message;
-        }
-      })
-      .saveNgondroLog(payload);
+        showDashboard(res.updatedDashboard);
+        setTimeout(() => { msg.style.display = 'none'; }, 2000);
+      } else {
+        msg.className = 'msg error';
+        msg.innerText = res.message;
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerText = '사가행 기록 저장';
+      msg.style.display = 'block';
+      msg.className = 'msg error';
+      msg.innerText = '저장 통신 실패: ' + err.toString();
+    }
   }
 
   function renderActiveOtherPractices(list) {
@@ -898,18 +910,25 @@
     targetEditAspPracticeId = null;
   }
 
-  function executeSaveOtherAsp() {
+  async function executeSaveOtherAsp() {
+    const btn = document.getElementById('btnSaveOtherAsp');
     const text = document.getElementById('editAspInput').value;
-    google.script.run
-      .withSuccessHandler(res => {
-        if(res.success) {
-          closeEditAspModal();
-          google.script.run.withSuccessHandler(showDashboard).accessDashboard(currentSession.name, currentSession.phoneLast4);
-        } else {
-          showAlert('수정 실패: ' + res.message);
-        }
-      })
-      .updateOtherAspiration(targetEditAspPracticeId, text);
+    btn.disabled = true;
+
+    try {
+      const res = await callGAS('updateOtherAspiration', { practiceId: targetEditAspPracticeId, aspirationText: text });
+      if (res.success) {
+        closeEditAspModal();
+        const dash = await callGAS('accessDashboard', { name: currentSession.name, phoneLast4: currentSession.phoneLast4 });
+        showDashboard(dash);
+      } else {
+        showAlert('수정 실패: ' + res.message);
+      }
+    } catch (err) {
+      showAlert('통신 실패: ' + err.toString());
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   function promptDeleteOtherLog(logId, name, date, amount) {
@@ -924,19 +943,24 @@
     targetDeleteLog = null;
   }
 
-  function executeDeleteOtherLog() {
+  async function executeDeleteOtherLog() {
     if (!targetDeleteLog) return;
-    google.script.run
-      .withSuccessHandler(res => {
-        closeDeleteModal();
-        if (res.success) {
-          showAlert('해당 기록이 원만히 삭제되었습니다.');
-          showDashboard(res.updatedDashboard);
-        } else {
-          showAlert('삭제 오류: ' + res.message);
-        }
-      })
-      .deleteOtherLog(currentSession.id, targetDeleteLog.logId, currentSession.phoneLast4);
+    try {
+      const res = await callGAS('deleteOtherLog', {
+        memberId: currentSession.id,
+        logId: targetDeleteLog.logId,
+        phoneLast4: currentSession.phoneLast4
+      });
+      closeDeleteModal();
+      if (res.success) {
+        showAlert('해당 기록이 원만히 삭제되었습니다.');
+        showDashboard(res.updatedDashboard);
+      } else {
+        showAlert('삭제 오류: ' + res.message);
+      }
+    } catch (err) {
+      showAlert('통신 실패: ' + err.toString());
+    }
   }
 
   function promptConclude(id, name, total, aspiration) {
@@ -954,42 +978,55 @@
     targetConcludePractice = null;
   }
 
-  function executeConclusion() {
+  async function executeConclusion() {
     if (!targetConcludePractice) return;
-    google.script.run
-      .withSuccessHandler(res => {
-        if(res.success) {
-          document.getElementById('modalPrompt').style.display = 'none';
-          document.getElementById('modalButtons').style.display = 'none';
-          const bless = document.getElementById('blessingText');
-          bless.innerHTML = `
-            <strong>🙏 원만 회향을 찬탄합니다 🙏</strong><br><br>
-            <strong>[${targetConcludePractice.name}]</strong> 기도를 하느라 수고하셨습니다.<br>
-            당신의 발원문대로 모든 것이 원만히 이뤄지기를 바랍니다.<br>
-            수행한 공덕을 지심으로 수희찬탄합니다.
-          `;
-          bless.style.display = 'block';
-          document.getElementById('modalDoneButtons').style.display = 'block';
-        }
-      })
-      .completeOtherPractice(targetConcludePractice.id, targetConcludePractice.total);
+    const btn = document.getElementById('btnExecuteConclusion');
+    btn.disabled = true;
+
+    try {
+      const res = await callGAS('completeOtherPractice', {
+        practiceId: targetConcludePractice.id,
+        finalTotal: targetConcludePractice.total
+      });
+      if (res.success) {
+        document.getElementById('modalPrompt').style.display = 'none';
+        document.getElementById('modalButtons').style.display = 'none';
+        const bless = document.getElementById('blessingText');
+        bless.innerHTML = `
+          <strong>🙏 원만 회향을 찬탄합니다 🙏</strong><br><br>
+          <strong>[${targetConcludePractice.name}]</strong> 기도를 하느라 수고하셨습니다.<br>
+          당신의 발원문대로 모든 것이 원만히 이뤄지기를 바랍니다.<br>
+          수행한 공덕을 지심으로 수희찬탄합니다.
+        `;
+        bless.style.display = 'block';
+        document.getElementById('modalDoneButtons').style.display = 'block';
+      } else {
+        showAlert('회향 처리 실패: ' + res.message);
+      }
+    } catch (err) {
+      showAlert('통신 실패: ' + err.toString());
+    } finally {
+      btn.disabled = false;
+    }
   }
 
-  function finishConclusionFlow() {
+  async function finishConclusionFlow() {
     closeModal();
-    google.script.run
-      .withSuccessHandler(data => {
-        showDashboard(data);
-        setTimeout(() => {
-          document.getElementById('addOtherSection').scrollIntoView({ behavior: 'smooth' });
-        }, 300);
-      })
-      .accessDashboard(currentSession.name, currentSession.phoneLast4);
+    try {
+      const data = await callGAS('accessDashboard', { name: currentSession.name, phoneLast4: currentSession.phoneLast4 });
+      showDashboard(data);
+      setTimeout(() => {
+        document.getElementById('addOtherSection').scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    } catch (err) {
+      showAlert('새로고침 실패: ' + err.toString());
+    }
   }
 
-  function submitNewOtherPractice() {
+  async function submitNewOtherPractice() {
     const name = document.getElementById('newOthName').value.trim();
     const asp = document.getElementById('newOthAspiration').value.trim();
+    const btn = document.getElementById('btnAddNewOther');
     if (!name) return showAlert('수행 항목명을 입력하세요.');
 
     const payload = {
@@ -1003,18 +1040,23 @@
       aspiration: asp
     };
 
-    google.script.run
-      .withSuccessHandler(res => {
-        if (res.success) {
-          showAlert(`[${name}] 기도가 등록되었습니다.\n발원을 새기며 정진을 시작하세요.`);
-          document.getElementById('newOthName').value = '';
-          document.getElementById('newOthAspiration').value = '';
-          google.script.run.withSuccessHandler(showDashboard).accessDashboard(currentSession.name, currentSession.phoneLast4);
-        } else {
-          showAlert('등록 오류: ' + res.message);
-        }
-      })
-      .registerOtherPractice(payload);
+    btn.disabled = true;
+    try {
+      const res = await callGAS('registerOtherPractice', { payload: payload });
+      if (res.success) {
+        showAlert(`[${name}] 기도가 등록되었습니다.\n발원을 새기며 정진을 시작하세요.`);
+        document.getElementById('newOthName').value = '';
+        document.getElementById('newOthAspiration').value = '';
+        const dash = await callGAS('accessDashboard', { name: currentSession.name, phoneLast4: currentSession.phoneLast4 });
+        showDashboard(dash);
+      } else {
+        showAlert('등록 오류: ' + res.message);
+      }
+    } catch (err) {
+      showAlert('통신 실패: ' + err.toString());
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   function openOtherLogInput(name, unit) {
@@ -1025,7 +1067,7 @@
     document.getElementById('otherLogInputBox').scrollIntoView({ behavior: 'smooth' });
   }
 
-  function submitOtherDaily() {
+  async function submitOtherDaily() {
     const btn = document.getElementById('oSaveBtn');
     const msg = document.getElementById('oMsg');
     const amt = document.getElementById('oAmount').value;
@@ -1044,30 +1086,35 @@
       memo: document.getElementById('oMemo').value
     };
 
-    google.script.run
-      .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.innerText = '수행 기록 저장';
-        msg.style.display = 'block';
+    try {
+      const res = await callGAS('saveOtherLog', { payload: payload });
+      btn.disabled = false;
+      btn.innerText = '수행 기록 저장';
+      msg.style.display = 'block';
 
-        if (res.success) {
-          msg.className = 'msg success';
-          msg.innerText = '수행 기록이 저장되었습니다.';
-          document.getElementById('oAmount').value = '';
-          document.getElementById('oMemo').value = '';
-          document.getElementById('oMemoCount').innerText = '0';
-          showDashboard(res.updatedDashboard);
+      if (res.success) {
+        msg.className = 'msg success';
+        msg.innerText = '수행 기록이 저장되었습니다.';
+        document.getElementById('oAmount').value = '';
+        document.getElementById('oMemo').value = '';
+        document.getElementById('oMemoCount').innerText = '0';
+        showDashboard(res.updatedDashboard);
 
-          setTimeout(() => {
-            msg.style.display = 'none';
-            document.getElementById('otherLogInputBox').style.display = 'none';
-          }, 1500);
-        } else {
-          msg.className = 'msg error';
-          msg.innerText = res.message;
-        }
-      })
-      .saveOtherLog(payload);
+        setTimeout(() => {
+          msg.style.display = 'none';
+          document.getElementById('otherLogInputBox').style.display = 'none';
+        }, 1500);
+      } else {
+        msg.className = 'msg error';
+        msg.innerText = res.message;
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.innerText = '수행 기록 저장';
+      msg.style.display = 'block';
+      msg.className = 'msg error';
+      msg.innerText = '저장 통신 실패: ' + err.toString();
+    }
   }
 
   function openAdvanceModal() {
@@ -1081,14 +1128,26 @@
     document.getElementById('advanceModal').style.display = 'none';
   }
 
-  function executeAdvanceRound() {
+  async function executeAdvanceRound() {
     closeAdvanceModal();
+    const btn = document.getElementById('btnExecuteAdvance');
     const curr = currentSession.round || 1;
-    google.script.run
-      .withSuccessHandler(() => {
-        google.script.run.withSuccessHandler(showDashboard).accessDashboard(currentSession.name, currentSession.phoneLast4);
-      })
-      .proceedNgondroNextRound(currentSession.id, currentSession.name, curr, currentSession.phoneLast4);
+    btn.disabled = true;
+
+    try {
+      await callGAS('proceedNgondroNextRound', {
+        memberId: currentSession.id,
+        memberName: currentSession.name,
+        currentRound: curr,
+        phoneLast4: currentSession.phoneLast4
+      });
+      const dash = await callGAS('accessDashboard', { name: currentSession.name, phoneLast4: currentSession.phoneLast4 });
+      showDashboard(dash);
+    } catch (err) {
+      showAlert('차수 승급 실패: ' + err.toString());
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   function exportMyDataCSV() {
@@ -1115,7 +1174,6 @@
     link.click();
   }
 
-  // 2. 모바일 iframe 차단 회피형 인쇄 / PDF 출력 엔진 (새 탭 렌더링)
   function printMyDiary() {
     if (!latestDashboardData || !currentSession) {
       showAlert('인쇄할 수행 데이터가 없습니다.\n기록을 먼저 불러와 주십시오.');
@@ -1127,7 +1185,6 @@
     const dateStr = latestDashboardData.todayDate;
     const totals = latestDashboardData.totalCounts;
 
-    // 사가행 전체 기록 테이블 행 구성
     let ngondroRows = '';
     (latestDashboardData.allNgondroLogs || []).forEach(l => {
       let details = [];
@@ -1144,7 +1201,6 @@
       `;
     });
 
-    // 기타 수행 전체 기록 테이블 행 구성
     let otherRows = '';
     (latestDashboardData.allOtherLogs || []).forEach(o => {
       otherRows += `
@@ -1156,7 +1212,6 @@
       `;
     });
 
-    // 원만 회향한 기도 목록 행 구성
     let compRows = '';
     (latestDashboardData.completedPractices || []).forEach(c => {
       compRows += `
@@ -1247,7 +1302,6 @@
       </html>
     `;
 
-    // iframe 제약을 벗어나 새 탭으로 즉시 렌더링
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.open();
@@ -1255,7 +1309,7 @@
       printWindow.document.close();
       printWindow.focus();
     } else {
-      showAlert('팝업이 차단되었습니다.\n브라우저 상단 설정에서 [팝업 허용]을 켜주십시오.');
+      showAlert('팝업이 차단되었습니다.\n브라우저 설정에서 [팝업 허용]을 켜주십시오.');
     }
   }
 </script>
