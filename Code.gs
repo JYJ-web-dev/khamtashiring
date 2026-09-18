@@ -1,13 +1,65 @@
 const TARGET_GOAL = 110000;
 
+// [외부 fetch API 지원] GET 및 POST 요청을 수신하여 JSON으로 응답
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action) {
+    return handleApiRequest_(e.parameter);
+  }
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('캄따시링 수행 일지')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
 }
 
-// [초고속 최적화] ss.getSheets() 1회 호출로 6개 시트 한 번에 메모리 맵핑 (통신 5회 절약)
+function doPost(e) {
+  let params = {};
+  if (e && e.postData && e.postData.contents) {
+    try {
+      params = JSON.parse(e.postData.contents);
+    } catch (err) {
+      params = e.parameter || {};
+    }
+  } else if (e && e.parameter) {
+    params = e.parameter;
+  }
+  return handleApiRequest_(params);
+}
+
+function handleApiRequest_(params) {
+  const action = params.action;
+  let result = { success: false, message: '유효하지 않은 요청입니다.' };
+
+  try {
+    if (action === 'accessDashboard') {
+      result = accessDashboard(params.name, params.phoneLast4);
+    } else if (action === 'saveNgondroLog') {
+      result = saveNgondroLog(params.payload || params);
+    } else if (action === 'saveOtherLog') {
+      result = saveOtherLog(params.payload || params);
+    } else if (action === 'deleteOtherLog') {
+      result = deleteOtherLog(params.memberId, params.logId, params.phoneLast4);
+    } else if (action === 'registerNewMemberAndNgondro') {
+      result = registerNewMemberAndNgondro(params.payload || params);
+    } else if (action === 'updateNgondroAspiration') {
+      result = updateNgondroAspiration(params.memberId, params.aspirationText);
+    } else if (action === 'updateOtherAspiration') {
+      result = updateOtherAspiration(params.practiceId, params.aspirationText);
+    } else if (action === 'registerOtherPractice') {
+      result = registerOtherPractice(params.payload || params);
+    } else if (action === 'completeOtherPractice') {
+      result = completeOtherPractice(params.practiceId, params.finalTotal);
+    } else if (action === 'proceedNgondroNextRound') {
+      result = proceedNgondroNextRound(params.memberId, params.memberName, params.currentRound, params.phoneLast4);
+    }
+  } catch (err) {
+    result = { success: false, message: err.toString() };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 6개 시트 1회 적재 맵핑
 function getSheetsMap_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheets = ss.getSheets();
@@ -53,7 +105,6 @@ function formatDateTimeFast_(val) {
   return String(val);
 }
 
-// 도반 확인
 function accessDashboard(name, phoneLast4) {
   try {
     const sheets = getSheetsMap_();
@@ -84,7 +135,6 @@ function accessDashboard(name, phoneLast4) {
   }
 }
 
-// 대시보드 내부 데이터 생성 (시트 객체 재사용으로 네트워크 절약)
 function fetchDashboardDataWithSheets_(sheets, member, todayStr) {
   const currentMonth = todayStr.substring(0, 7);
 
@@ -212,11 +262,6 @@ function fetchDashboardDataWithSheets_(sheets, member, todayStr) {
   };
 }
 
-function fetchDashboardData(member, todayStr) {
-  return fetchDashboardDataWithSheets_(getSheetsMap_(), member, todayStr);
-}
-
-// 사가행 일일 기록 저장
 function saveNgondroLog(payload) {
   const lock = LockService.getScriptLock();
   try {
@@ -266,13 +311,12 @@ function saveNgondroLog(payload) {
 
     return { success: true, updatedDashboard: updatedDashboard };
   } catch (err) {
-    return { success: false, message: '저장 처리 지연: 잠시 후 다시 시도해 주세요. (' + err.toString() + ')' };
+    return { success: false, message: '저장 처리 지연: ' + err.toString() };
   } finally {
     lock.releaseLock();
   }
 }
 
-// 기타수행 기록 저장
 function saveOtherLog(payload) {
   const lock = LockService.getScriptLock();
   try {
@@ -299,13 +343,12 @@ function saveOtherLog(payload) {
 
     return { success: true, updatedDashboard: updatedDashboard };
   } catch (err) {
-    return { success: false, message: '저장 처리 지연: 잠시 후 다시 시도해 주세요. (' + err.toString() + ')' };
+    return { success: false, message: '저장 처리 지연: ' + err.toString() };
   } finally {
     lock.releaseLock();
   }
 }
 
-// 기타수행 일지 삭제
 function deleteOtherLog(memberId, logId, phoneLast4) {
   const lock = LockService.getScriptLock();
   try {
@@ -328,7 +371,7 @@ function deleteOtherLog(memberId, logId, phoneLast4) {
       const updatedDashboard = fetchDashboardDataWithSheets_(sheets, { id: memberId, name: '', phoneLast4: phoneLast4 }, todayStr);
       return { success: true, updatedDashboard: updatedDashboard };
     }
-    return { success: false, message: '삭제 대상 기록을 찾을 수 없습니다.' };
+    return { success: false, message: '삭제 대상을 찾을 수 없습니다.' };
   } catch (err) {
     return { success: false, message: '삭제 실패: ' + err.toString() };
   } finally {
