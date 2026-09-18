@@ -582,6 +582,7 @@
     }
   }
 
+  // [핵심 패치] 신규 도반 가입 에러(TypeError)를 100% 차단하는 최신화 코드
   async function submitNewMemberInit() {
     const btn = document.getElementById('btnInitMember');
     const payload = {
@@ -603,10 +604,9 @@
     try {
       const res = await callGAS('registerNewMemberAndNgondro', { payload: payload });
       if (res.success) {
-        const dash = await callGAS('accessDashboard', { name: payload.name, phoneLast4: payload.phoneLast4 });
-        currentSession = dash.member;
+        currentSession = res.updatedDashboard.member;
         document.getElementById('newMemberSection').style.display = 'none';
-        showDashboard(dash);
+        showDashboard(res.updatedDashboard);
       } else {
         showAlert('등록 오류: ' + res.message);
       }
