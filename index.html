@@ -392,19 +392,26 @@
 </div>
 
 <script>
-  // =========================================================================
-  // 구글 앱스 스크립트 웹 앱 배포 URL (고속 백엔드 API 연결점)
-  // =========================================================================
+  // 구글 앱스 스크립트 웹 앱 배포 URL
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzxN133mThlL6AV5XBCJlwXkhRo5Ds1JZ9ycqGB2V7yRLeJEC9ERttLKlAvMLFyiYHSA/exec";
 
-  // 사파리 CORS 차단을 원천 방지하는 비동기 통신 래퍼
+  // [사파리/엣지 완벽 호환] GET 쿼리 전송 + 텍스트 수신 후 파싱 엔진
   async function callGAS(action, params = {}) {
     const payload = Object.assign({ action: action }, params);
-    const response = await fetch(GAS_WEB_APP_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
+    // 캐시 방지용 타임스탬프(_t) 부착
+    const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify(payload)) + '&_t=' + Date.now();
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow'
     });
-    return await response.json();
+    
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error('응답 형식 오류: ' + text.substring(0, 100));
+    }
   }
 
   let currentSession = null;
