@@ -99,14 +99,24 @@
     </div>
     <div class="form-group">
       <label>법명 / 이름 *</label>
-      <input type="text" id="authName" placeholder="예: 보리심 (또는 홍길동)">
+      <!-- [수정] 입력 시 유효성 검사 및 엔터키 작동 추가 -->
+      <input type="text" id="authName" placeholder="예: 보리심 (또는 홍길동)" oninput="validateAuthForm()" onkeydown="handleAuthEnter(event)">
     </div>
     <div class="form-group">
       <label>전화번호 뒷자리 4자리 *</label>
-      <input type="tel" id="authPhone" maxlength="4" placeholder="예: 5678">
+      <!-- [수정] 입력 시 유효성 검사 및 엔터키 작동 추가 -->
+      <input type="tel" id="authPhone" maxlength="4" placeholder="예: 5678" oninput="validateAuthForm()" onkeydown="handleAuthEnter(event)">
     </div>
-    <button class="btn-main" id="btnAuth" onclick="handleAuth()">도반 확인 및 일지 열기</button>
+    <!-- [수정] 기본 상태를 disabled(회색 잠금)로 변경 -->
+    <button class="btn-main" id="btnAuth" onclick="handleAuth()" disabled>도반 확인 및 일지 열기</button>
     <div id="authMsg" class="msg"></div>
+
+    <div id="authLogoArea" style="text-align: center; margin-top: 28px; margin-bottom: 10px;">
+      <img id="kamtashilingLogo" 
+           src="https://raw.githubusercontent.com/JYJ-web-dev/khamtashiring/main/logo.png" 
+           alt="캄따시링 로고" 
+           style="width: 45%; max-width: 160px; min-width: 85px; height: auto; opacity: 0.95; filter: drop-shadow(0 4px 10px rgba(92, 32, 20, 0.12));">
+    </div>
   </div>
 
   <div id="newMemberSection" style="display: none; padding: 24px;">
@@ -382,9 +392,7 @@
   // 구글 앱스 스크립트 웹 앱 배포 URL
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzxN133mThlL6AV5XBCJlwXkhRo5Ds1JZ9ycqGB2V7yRLeJEC9ERttLKlAvMLFyiYHSA/exec";
 
-  // =========================================================================
-  // [사파리/카톡/엣지 100% 프리패스 우회 엔진 (JSONP)]
-  // =========================================================================
+  // JSONP 통신 엔진
   function callGAS(action, params = {}) {
     return new Promise((resolve, reject) => {
       const callbackName = 'gas_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
@@ -425,6 +433,44 @@
 
   let completedPracticesData = [];
   let currentCompletedPage = 1;
+
+  // =========================================================================
+  // [새 기능 1] 로그인 폼 유효성 검사 (4자리 꽉 차야 버튼 활성화)
+  // =========================================================================
+  function validateAuthForm() {
+    const name = document.getElementById('authName').value.trim();
+    const phone = document.getElementById('authPhone').value.trim();
+    const btn = document.getElementById('btnAuth');
+    
+    // 이름이 있고, 전화번호가 정확히 4자리 숫자일 때만 잠금 해제
+    if (name.length > 0 && phone.length === 4 && !isNaN(phone)) {
+      btn.disabled = false;
+    } else {
+      btn.disabled = true;
+    }
+  }
+
+  // =========================================================================
+  // [새 기능 2] 엔터키(Enter) 입력 시 자동으로 확인 버튼 눌러주기
+  // =========================================================================
+  function handleAuthEnter(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // 엔터 쳤을 때 화면 새로고침되는 현상 방지
+      const btn = document.getElementById('btnAuth');
+      
+      if (!btn.disabled) {
+        // 조건이 맞으면 바로 통신 시작
+        handleAuth();
+      } else {
+        // 조건이 안 맞는데 엔터를 친 경우 친절한 안내
+        if (document.getElementById('authPhone').value.length !== 4) {
+          showAlert('전화번호 뒷자리 4자리를 정확히 채워주세요.');
+        } else if (document.getElementById('authName').value.trim().length === 0) {
+          showAlert('법명(또는 이름)을 입력해 주세요.');
+        }
+      }
+    }
+  }
 
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -493,21 +539,18 @@
     document.getElementById('logoutModal').style.display = 'none';
   }
 
-  // =========================================================================
-  // [핵심 패치] 로그아웃 시 폼 청소 (이전 사용자 데이터 초기화)
-  // =========================================================================
   function executeLogout() {
     closeLogoutModal();
     currentSession = null;
     tempRegisterPayload = null;
     latestDashboardData = null;
 
-    // 로그인 폼 비우기
+    // 폼 청소 및 버튼 다시 잠금 처리
     document.getElementById('authName').value = '';
     document.getElementById('authPhone').value = '';
     document.getElementById('authMsg').style.display = 'none';
+    document.getElementById('btnAuth').disabled = true; // 로그아웃 시 다시 회색 버튼으로 원상복구
 
-    // 신규 등록 폼 완벽 비우기 (웨일 브라우저 찌꺼기 문제 해결)
     document.getElementById('initPros').value = '';
     document.getElementById('initVajra').value = '';
     document.getElementById('initMandala').value = '';
@@ -526,8 +569,8 @@
     const msg = document.getElementById('authMsg');
     const btn = document.getElementById('btnAuth');
     
-    if (!name || !phone) return showAlert('법명(이름)과 전화번호 뒷자리 4자리를\n모두 입력해 주세요.');
-    if (phone.length !== 4 || isNaN(phone)) return showAlert('전화번호 뒷자리는\n숫자 4자리로 정확히 입력해 주세요.');
+    // 버튼이 활성화된 상태에서만 진입하므로 불필요한 유효성 검사창 최소화
+    if (!name || phone.length !== 4) return;
 
     msg.style.display = 'block';
     msg.className = 'msg loading';
@@ -540,6 +583,7 @@
 
       if (!res.success) {
         showAlert('조회 오류: ' + res.message);
+        btn.disabled = false;
         return;
       }
 
@@ -549,6 +593,7 @@
           `입력하신 정보:\n• 법명/이름: ${res.name}\n• 전화번호: ${res.phoneLast4}\n\n` +
           `기존 기록을 찾을 수 없습니다.\n글자나 번호에 오타가 있다면 [오타 수정]을,\n처음 오신 분은 [신규 등록]을 눌러주세요.`;
         showConfirmModal(confirmNotice);
+        btn.disabled = false;
       } else {
         currentSession = res.member;
         showDashboard(res);
@@ -556,7 +601,6 @@
     } catch (err) {
       msg.style.display = 'none';
       showAlert('서버 통신 실패: 인터넷 연결을 확인해 주세요.\n(' + err.toString() + ')');
-    } finally {
       btn.disabled = false;
     }
   }
