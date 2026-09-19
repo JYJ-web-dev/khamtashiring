@@ -66,7 +66,6 @@
 
     .char-count { text-align: right; font-size: 11px; color: #9c938b; margin-top: 3px; }
     
-    /* 로딩 안내창 스타일 강화 */
     .msg { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 13.5px; text-align: center; display: none; word-break: keep-all; line-height: 1.5; font-weight: 500; }
     .msg.loading { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
     .msg.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
@@ -94,7 +93,6 @@
     </div>
   </div>
 
-  <!-- [1단계] 본인 인증 화면 -->
   <div id="authSection" style="padding: 24px;">
     <div style="font-size: 14.5px; color: #6e645a; line-height: 1.6; margin-bottom: 16px; text-align: center;">
       본인의 <strong>법명(또는 이름)</strong>과 <strong>전화번호 뒷자리 4자리</strong>를 입력해 주세요.
@@ -109,26 +107,15 @@
     </div>
     <button class="btn-main" id="btnAuth" onclick="handleAuth()">도반 확인 및 일지 열기</button>
     <div id="authMsg" class="msg"></div>
-
-    <div id="authLogoArea" style="text-align: center; margin-top: 28px; margin-bottom: 10px;">
-      <img id="kamtashilingLogo" 
-           src="https://raw.githubusercontent.com/JYJ-web-dev/khamtashiring/main/logo.png" 
-           alt="캄따시링 로고" 
-           style="width: 45%; max-width: 160px; min-width: 85px; height: auto; opacity: 0.95; filter: drop-shadow(0 4px 10px rgba(92, 32, 20, 0.12));">
-    </div>
   </div>
 
-  <!-- [2단계] 신규 도반 초기설정 -->
   <div id="newMemberSection" style="display: none; padding: 24px;">
     <div style="font-weight: bold; font-size: 16px; color: #5c2014; margin-bottom: 8px;">첫 사가행 설정 및 발원문</div>
     <p style="font-size: 13px; color: #6e645a; margin-bottom: 14px;">
       이미 수행 중이시라면 기존 누적 횟수를 입력하시고, 수행의 원력을 세우는 발원문을 남겨주세요.
     </p>
 
-    <div class="form-group">
-      <label>수행 시작일</label>
-      <input type="date" id="initStartDate">
-    </div>
+    <div class="form-group"><label>수행 시작일</label><input type="date" id="initStartDate"></div>
     <div class="grid-2">
       <div class="form-group"><label>대배 기존 누적</label><input type="number" id="initPros" placeholder="0" min="0"></div>
       <div class="form-group"><label>금강살타 기존 누적</label><input type="number" id="initVajra" placeholder="0" min="0"></div>
@@ -143,7 +130,6 @@
     <div id="initMsg" class="msg"></div>
   </div>
 
-  <!-- [3단계] 메인 대시보드 -->
   <div id="mainSection" style="display: none;">
     <div style="padding: 12px 16px; background: #fdfaf6; border-bottom: 1px solid #ebdcd0;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -161,7 +147,6 @@
       <button class="tab-btn" onclick="switchTab('otherTab', this)">2. 기타 수행</button>
     </div>
 
-    <!-- 탭 1: 사가행 -->
     <div id="ngondroTab" class="tab-content active">
       <div class="aspiration-card">
         <div class="aspiration-title">
@@ -183,7 +168,6 @@
 
       <div id="ngondroCardsBox"></div>
 
-      <!-- 사가행 당일 기록 폼 -->
       <div style="background: #faf8f5; border: 1px solid #ebdcd0; border-radius: 12px; padding: 16px; margin-top: 16px;">
         <div style="font-weight: bold; font-size: 14px; color: #5c2014; margin-bottom: 10px;">오늘의 사가행 기록하기</div>
         <div class="form-group">
@@ -217,7 +201,6 @@
       </div>
     </div>
 
-    <!-- 탭 2: 기타 수행 -->
     <div id="otherTab" class="tab-content">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span style="font-size: 15px; font-weight: bold; color: #4a423a;">진행 중인 발원 기도</span>
@@ -225,7 +208,6 @@
 
       <div id="otherListContainer"></div>
 
-      <!-- 기타수행 당일 기록 폼 -->
       <div id="otherLogInputBox" style="display: none; background: #faf8f5; border: 1px solid #ebdcd0; border-radius: 12px; padding: 16px; margin-top: 16px;">
         <div style="font-weight: bold; font-size: 14px; color: #5c2014; margin-bottom: 10px;" id="selectedOtherTitle">당일 수행 기록</div>
         <input type="hidden" id="selectedOtherName">
@@ -310,7 +292,6 @@
   </div>
 </div>
 
-<!-- 모달 창 세트 -->
 <div id="simpleAlertModal" class="modal-overlay" style="display: none;">
   <div class="modal-content" style="max-width: 360px; padding: 22px 18px;">
     <div style="font-size: 26px; margin-bottom: 8px;">📿</div>
@@ -401,22 +382,31 @@
   // 구글 앱스 스크립트 웹 앱 배포 URL
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzxN133mThlL6AV5XBCJlwXkhRo5Ds1JZ9ycqGB2V7yRLeJEC9ERttLKlAvMLFyiYHSA/exec";
 
-  // [사파리/엣지 호환] GET 쿼리 전송 + 병목 유발 예열 기능 제거
-  async function callGAS(action, params = {}) {
-    const payload = Object.assign({ action: action }, params);
-    const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify(payload)) + '&_t=' + Date.now();
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow'
+  // =========================================================================
+  // [사파리/카톡/엣지 100% 프리패스 우회 엔진 (JSONP)]
+  // =========================================================================
+  function callGAS(action, params = {}) {
+    return new Promise((resolve, reject) => {
+      const callbackName = 'gas_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        resolve(data);
+      };
+
+      const payload = Object.assign({ action: action }, params);
+      const url = GAS_WEB_APP_URL + '?data=' + encodeURIComponent(JSON.stringify(payload)) + '&callback=' + callbackName + '&_t=' + Date.now();
+
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = () => {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        reject(new Error('서버 통신 실패 (사파리 등 브라우저 보안에 의해 차단됨)'));
+      };
+      document.body.appendChild(script);
     });
-    
-    const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch (e) {
-      throw new Error('응답 형식 오류: ' + text.substring(0, 100));
-    }
   }
 
   let currentSession = null;
@@ -438,12 +428,7 @@
 
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
   function switchTab(tabId, btn) {
@@ -508,15 +493,26 @@
     document.getElementById('logoutModal').style.display = 'none';
   }
 
+  // =========================================================================
+  // [핵심 패치] 로그아웃 시 폼 청소 (이전 사용자 데이터 초기화)
+  // =========================================================================
   function executeLogout() {
     closeLogoutModal();
     currentSession = null;
     tempRegisterPayload = null;
     latestDashboardData = null;
 
+    // 로그인 폼 비우기
     document.getElementById('authName').value = '';
     document.getElementById('authPhone').value = '';
     document.getElementById('authMsg').style.display = 'none';
+
+    // 신규 등록 폼 완벽 비우기 (웨일 브라우저 찌꺼기 문제 해결)
+    document.getElementById('initPros').value = '';
+    document.getElementById('initVajra').value = '';
+    document.getElementById('initMandala').value = '';
+    document.getElementById('initGuru').value = '';
+    document.getElementById('initAspiration').value = '';
 
     document.getElementById('mainSection').style.display = 'none';
     document.getElementById('newMemberSection').style.display = 'none';
@@ -524,7 +520,6 @@
     window.scrollTo(0, 0);
   }
 
-  // [수정] 도반 확인 로딩 안내 강화
   async function handleAuth() {
     const name = document.getElementById('authName').value.trim();
     const phone = document.getElementById('authPhone').value.trim();
@@ -536,7 +531,7 @@
 
     msg.style.display = 'block';
     msg.className = 'msg loading';
-    msg.innerHTML = '구글 서버에서 기록을 불러오고 있습니다.<br>잠시만 기다려주세요 (최초 1회 5~10초 소요)';
+    msg.innerHTML = '구글 서버에서 기록을 불러오고 있습니다.<br>잠시만 기다려주세요 (최대 10초)';
     btn.disabled = true;
 
     try {
@@ -566,7 +561,6 @@
     }
   }
 
-  // [수정] 신규 가입 에러 방지 최적화 코드
   async function submitNewMemberInit() {
     const btn = document.getElementById('btnInitMember');
     const msg = document.getElementById('initMsg');
